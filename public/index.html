@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BaiscopeLK Search</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6" style="float: none; margin: 0 auto;">
+                <h2>BaiscopeLK Search</h2>
+                <div id="custom-search-input">
+                    <form method="get" class="form">
+                        <div class="input-group col-md-12">
+                            <input id="txtKeyword" type="text" class="form-control input-lg" placeholder="Search..." />
+                            <span class="input-group-btn">
+                                <button type="submit" class="btn btn-info btn-lg" type="button">
+                                    <i class="glyphicon glyphicon-search"></i>
+                                </button>
+                            </span>
+                    </form>
+                </div>
+            </div>
+
+            <div id="imgLoading" style="margin-top: 20px;" class="hidden">
+                <center>
+                    <img src="./img/loading.gif" alt="" width="120px">
+                </center>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div id="searchResults" style="margin-top: 20px;" class="pre-scrollable">
+
+                    </div>
+                </div>
+            </div>
+            <br>
+            <p class="text-muted">Search subtitles on Baiscopelk easily.</p>
+        </div>
+    </div>
+
+    <script src="./js/main.js"></script>
+</body>
+
+</html>
