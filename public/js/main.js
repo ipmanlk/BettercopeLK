@@ -71,7 +71,7 @@ const downloadSub = (postUrl) => {
 				const downloadUrl = window.URL.createObjectURL(blob);
 				const link = document.createElement("a");
 				link.setAttribute("href", downloadUrl);
-				link.setAttribute("download", "file");
+				link.setAttribute("download", "subtitle.zip");
 				link.style.display = "none";
 				document.body.appendChild(link);
 				link.click();
