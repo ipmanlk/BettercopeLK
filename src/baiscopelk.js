@@ -19,7 +19,8 @@ const search = async (keyword) => {
 	try {
 		$(".item-list").each((i, element) => {
 			const postBox = $(element).find(".post-box-title a");
-			const title = $(postBox).text();
+			const title = $(postBox).text().trim();
+			if (title == "Collection") return;
 			const postUrl = $(postBox).attr("href");
 			const thumbnail = $(element).find(".post-thumbnail a img").attr("src");
 			searchResults.push({ title, postUrl, thumbnail });
