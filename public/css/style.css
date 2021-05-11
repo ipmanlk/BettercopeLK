@@ -119,6 +119,7 @@ body {
 .s-result {
 	display: flex;
 	align-items: center;
+	justify-content: space-between;
 	background-color: var(--bg-color);
 	color: var(--primary-text-color);
 	margin: 10px 0 10px 0;
@@ -132,9 +133,18 @@ body {
 	cursor: pointer;
 }
 
+.s-result:hover .download-icon {
+	display: unset;
+}
+
 .s-result h3 {
 	margin: 0;
 	font-size: 15px;
+}
+
+.download-icon {
+	display: none;
+	height: 18px;
 }
 
 /* loading spinner */

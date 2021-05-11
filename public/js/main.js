@@ -25,8 +25,9 @@ document.querySelector("form").addEventListener("submit", (e) => {
 			let html = "";
 			response.data.forEach((result) => {
 				html += `
-				<div class="s-result">
-					<h3 onClick="downloadSub('${result.postUrl}')">${result.title}</h3>
+				<div class="s-result" onClick="downloadSub('${result.postUrl}')">
+					<h3>${result.title}</h3>
+					<img src="./img/down.svg" class="download-icon" />
 				</div>`;
 			});
 			searchResults.innerHTML = html;
@@ -41,6 +42,8 @@ document.querySelector("form").addEventListener("submit", (e) => {
 });
 
 const downloadSub = (postUrl) => {
+	swal("Success!", "Subtitle will start download shortly.", "success");
+
 	fetch("/download", {
 		method: "POST",
 		headers: {
