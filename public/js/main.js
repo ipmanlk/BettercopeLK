@@ -16,7 +16,7 @@ document.querySelector("form").addEventListener("submit", (e) => {
 		.then(async (res) => {
 			const response = await res.json();
 
-			if (!response.status) {
+			if (res.error) {
 				window.alert(response.msg);
 				return;
 			}
@@ -25,8 +25,11 @@ document.querySelector("form").addEventListener("submit", (e) => {
 			let html = "";
 			response.data.forEach((result) => {
 				html += `
-				<div class="s-result" onClick="downloadSub('${result.postUrl}')">
+				<div class="s-result" onClick="downloadSub('${result.postUrl}', '${
+					result.source
+				}')">
 					<h3>${result.title}</h3>
+					<h3 class="download-source">${getReadableSource(result.source)}</h3>
 					<img src="./img/down.svg" class="download-icon" />
 				</div>`;
 			});
@@ -41,7 +44,7 @@ document.querySelector("form").addEventListener("submit", (e) => {
 		});
 });
 
-const downloadSub = (postUrl) => {
+const downloadSub = (postUrl, source) => {
 	swal("Success!", "Subtitle will start download shortly.", "success");
 
 	fetch("/download", {
@@ -49,7 +52,7 @@ const downloadSub = (postUrl) => {
 		headers: {
 			"Content-Type": "application/json",
 		},
-		body: JSON.stringify({ postUrl: postUrl }),
+		body: JSON.stringify({ postUrl, source }),
 	})
 		.then((res) => {
 			if (!res.status) {
@@ -72,4 +75,14 @@ const downloadSub = (postUrl) => {
 			console.log(e);
 			window.alert("Unable to reach the api.");
 		});
+};
+
+const getReadableSource = (source) => {
+	switch (source) {
+		case "baiscopelk":
+			return "Baiscope.lk";
+
+		case "cineru":
+			return "Cineru.lk";
+	}
 };

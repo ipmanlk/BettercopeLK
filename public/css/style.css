@@ -137,6 +137,10 @@ body {
 	display: unset;
 }
 
+.s-result:hover .download-source {
+	display: none;
+}
+
 .s-result h3 {
 	margin: 0;
 	font-size: 15px;
