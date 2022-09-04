@@ -1,20 +1,28 @@
-# baiscopelk-search
-_Search subtitles on Baiscopelk easily._
+# BettercopeLK
 
-## Online version
+_Better way to search & download Sinhala subtitles_
+
+## Online version (OUTDATED)
+
 - [https://baiscopelk-search.herokuapp.com](https://baiscopelk-search.herokuapp.com/)
 
+## Currently supported sites
+
+- [Baiscope.lk](https://baiscopelk.com/)
+- [Cineru.lk](https://cineru.lk/)
+
 ## Requirements
-- Node.js v12 or newer.
-- NPM or Yarn.
+
+- Node.js v16 or newer.
 
 ## Usage
 
 1. Clone this repository using Git or download as a zip file.
 
-2. Run ``npm install`` to install dependencies.
+2. Run `npm install` to install dependencies.
 
-3. Run ``node src/app.js`` to start the web app.
+3. Run `npm run start:dev` to start the web app.
 
 ## Screenshots
-<img src="https://i.imgur.com/0E20fPX.png"/>
+
+<img src="https://i.imgur.com/x5zEO6s.png"/>
