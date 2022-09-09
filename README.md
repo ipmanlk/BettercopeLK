@@ -2,9 +2,9 @@
 
 _Better way to search & download Sinhala subtitles_
 
-## Online version (OUTDATED)
+## Online version
 
-- [https://baiscopelk-search.herokuapp.com](https://baiscopelk-search.herokuapp.com/)
+- [https://bettercopelk.fly.dev/](https://bettercopelk.fly.dev/)
 
 ## Currently supported sites
 
