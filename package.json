@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "node dist/server.js",
-    "start:dev": "ts-node src/server.ts",
+    "start": "node dist/app.js",
     "build": "tsc",
     "ts-node": "ts-node"
   },
