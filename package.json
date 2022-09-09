@@ -4,6 +4,7 @@
   "description": "",
   "scripts": {
     "start": "node dist/app.js",
+    "start:dev": "ts-node src/app.ts",
     "build": "tsc",
     "ts-node": "ts-node"
   },

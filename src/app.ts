@@ -5,7 +5,8 @@ import { searchSites } from "./sites";
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
 app.use("/", express.static(`${__dirname}/../public`));
 
 app.get("/search/:keyword", async (req, res) => {
@@ -20,10 +21,16 @@ app.get("/search/:keyword", async (req, res) => {
 });
 
 app.post("/download", (req, res) => {
-	downloadSubtitle(req.body.postUrl || "", req.body.source || "")
-		.then((buffer) => {
+	if (!req.body.postUrl || !req.body.source) {
+		res.statusMessage = "Invalid data provided";
+		return res.status(400).end();
+	}
+
+	downloadSubtitle(req.body.postUrl, req.body.source)
+		.then((data) => {
 			res.set("Content-Type", "application/zip");
-			res.send(buffer);
+			res.set("Content-Disposition", `attachment; filename="${data.filename}"`);
+			res.send(data.file);
 		})
 		.catch((e) => {
 			console.error(e);

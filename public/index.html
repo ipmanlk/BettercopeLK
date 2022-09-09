@@ -26,6 +26,12 @@
 			<div class="s-results hidden"></div>
 		</div>
 
+		<form method="POST" action="/download" style="display: none">
+			<input type="text" name="postUrl" id="txtPostUrl" value="" />
+			<input type="text" name="source" value="" id="txtSource" />
+			<button type="submit" id="btnDownload">Download</button>
+		</form>
+
 		<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 		<script src="./js/main.js"></script>
 	</body>

@@ -46,35 +46,11 @@ document.querySelector("form").addEventListener("submit", (e) => {
 
 const downloadSub = (postUrl, source) => {
 	swal("Success!", "Subtitle will start download shortly.", "success");
-
-	fetch("/download", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({ postUrl, source }),
-	})
-		.then((res) => {
-			if (!res.status) {
-				window.alert(res.msg);
-				return;
-			}
-			res.blob().then((blob) => {
-				const downloadUrl = window.URL.createObjectURL(blob);
-				const link = document.createElement("a");
-				link.setAttribute("href", downloadUrl);
-				link.setAttribute("download", "subtitle.zip");
-				link.style.display = "none";
-				document.body.appendChild(link);
-				link.click();
-				window.URL.revokeObjectURL(link.href);
-				document.body.removeChild(link);
-			});
-		})
-		.catch((e) => {
-			console.log(e);
-			window.alert("Unable to reach the api.");
-		});
+	document.getElementById("txtPostUrl").value = postUrl;
+	document.getElementById("txtSource").value = source;
+	setTimeout(() => {
+		document.getElementById("btnDownload").click();
+	}, 1000);
 };
 
 const getReadableSource = (source) => {
