@@ -1,7 +1,7 @@
 import { load } from "cheerio";
 import { request } from "undici";
 import { Source } from "./types";
-import { getBaiscopelkFilename, getFilenameFromUrl } from "./util";
+import { getFilenameFromHeader, getFilenameFromUrl } from "./util";
 
 const downloadBaiscopelk = async (postUrl: string) => {
   // extract html from the webpage
@@ -21,7 +21,7 @@ const downloadBaiscopelk = async (postUrl: string) => {
 
   // return it as a buffer
   return {
-    filename: getBaiscopelkFilename(`${headers["content-disposition"]}`),
+    filename: getFilenameFromHeader(`${headers["content-disposition"]}`),
     file: Buffer.from(await downloadBody.arrayBuffer()),
   };
 };
@@ -41,6 +41,21 @@ const downloadCineru = async (postUrl: string) => {
   };
 };
 
+const downloadPiratelk = async (postUrl: string) => {
+  const { body } = await request(postUrl);
+  const html = await body.text();
+
+  const $ = load(html);
+  const dLink = $(".download-button").attr("href") as string;
+
+  const { body: downloadBody, headers } = await request(dLink);
+
+  return {
+    filename: getFilenameFromHeader(`${headers["content-disposition"]}`),
+    file: Buffer.from(await downloadBody.arrayBuffer()),
+  };
+};
+
 export const downloadSubtitle = async (postUrl: string, source: Source) => {
   switch (source) {
     case "baiscopelk":
@@ -48,5 +63,8 @@ export const downloadSubtitle = async (postUrl: string, source: Source) => {
 
     case "cineru":
       return downloadCineru(postUrl);
+
+    case "piratelk":
+      return downloadPiratelk(postUrl);
   }
 };

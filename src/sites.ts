@@ -39,6 +39,10 @@ const getSources = (keyword: string): SearchSource[] => {
       url: `https://cineru.lk/?s=${encodeURIComponent(keyword)}`,
       name: "cineru",
     },
+    {
+      url: `https://piratelk.com/?s=${encodeURIComponent(keyword)}`,
+      name: "piratelk",
+    }
   ];
 };
 

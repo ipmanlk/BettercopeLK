@@ -1,4 +1,4 @@
-export type Source = "baiscopelk" | "cineru";
+export type Source = "baiscopelk" | "cineru" | "piratelk";
 
 export type SearchSource = {
   url: string;

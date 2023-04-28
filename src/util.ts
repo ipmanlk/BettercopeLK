@@ -1,7 +1,7 @@
-const BAISCOPELK_REGEX = /filename\*=UTF-8''([^;]+)/;
+const HEADER_REGEX = /filename\*=UTF-8''([^;]+)/;
 
-export const getBaiscopelkFilename = (contentDisposition: string) => {
-  const result = contentDisposition.match(BAISCOPELK_REGEX);
+export const getFilenameFromHeader = (contentDisposition: string) => {
+  const result = contentDisposition.match(HEADER_REGEX);
   return result ? result[1] : "subtitle.zip";
 };
 
