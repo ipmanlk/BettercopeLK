@@ -1,6 +1,6 @@
 import express from "express";
 import { downloadSubtitle } from "./download";
-import { searchSites } from "./sites";
+import { SiteCrawler } from "./sites";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -10,13 +10,30 @@ app.use(express.urlencoded({ extended: false }));
 app.use("/", express.static(`${__dirname}/../public`));
 
 app.get("/search/:keyword", async (req, res) => {
-  try {
-    const results = await searchSites(req.params.keyword);
-    res.json({ data: results });
-  } catch (e) {
-    console.error(e);
-    res.json({ error: e?.toString() });
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+
+  if (!req.params.keyword) {
+    res.write(`data: ${JSON.stringify({ error: "Invalid keyword" })}\n\n`);
+    res.end();
+    return;
   }
+
+  const siteCrawler = new SiteCrawler(req.params.keyword);
+
+  siteCrawler.on("data", (data) => {
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  });
+
+  siteCrawler.on("end", () => {
+    res.write("event: end\n");
+    res.write("data: end\n\n");
+    res.end();
+  });
+
+  siteCrawler.start();
 });
 
 app.post("/download", async (req, res) => {

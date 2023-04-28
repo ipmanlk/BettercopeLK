@@ -1,6 +1,7 @@
 import { load } from "cheerio";
 import { request } from "undici";
 import { SearchResult, SearchSource, Source } from "./types";
+import { EventEmitter } from "stream";
 
 const searchWpSite = async (url: string, source: Source) => {
   const { body } = await request(url, {
@@ -41,18 +42,26 @@ const getSources = (keyword: string): SearchSource[] => {
   ];
 };
 
-export const searchSites = async (keyword: string) => {
-  let searchResults: SearchResult[] = [];
-  const sources = getSources(keyword);
+export class SiteCrawler extends EventEmitter {
+  private keyword: string;
 
-  for (const source of sources) {
-    try {
-      const results = await searchWpSite(source.url, source.name);
-      searchResults = searchResults.concat(results);
-    } catch (e) {
-      console.error(e);
-    }
+  constructor(keyword: string) {
+    super();
+    this.keyword = keyword;
   }
 
-  return searchResults;
-};
+  public async start() {
+    const sources = getSources(this.keyword);
+
+    for (const source of sources) {
+      try {
+        const results = await searchWpSite(source.url, source.name);
+        this.emit("data", results);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    this.emit("end");
+  }
+}
