@@ -1,4 +1,4 @@
-const HEADER_REGEX = /filename\*=UTF-8''([^;]+)/;
+const HEADER_REGEX = /filename=["']([^"']+)["']/;
 
 export const getFilenameFromHeader = (contentDisposition: string) => {
   const result = contentDisposition.match(HEADER_REGEX);

@@ -3,7 +3,7 @@ import { request } from "undici";
 import { SearchResult, SearchSource, Source } from "./types";
 import { EventEmitter } from "stream";
 
-const searchWpSite = async (url: string, source: Source) => {
+const scrapeWpSite = async (url: string, source: Source) => {
   const { body } = await request(url, {
     bodyTimeout: 30000,
     headersTimeout: 30000,
@@ -29,20 +29,47 @@ const searchWpSite = async (url: string, source: Source) => {
   return searchResults;
 };
 
+const scrapeBaiscopeLk = async (url: string) => {
+  const { body } = await request(url, {
+    bodyTimeout: 30000,
+    headersTimeout: 30000,
+  });
+
+  const resultsHtml = await body.text();
+  const $ = load(resultsHtml);
+
+  const searchResults: SearchResult[] = [];
+
+  $("article.post").each((_, element) => {
+    const entryLink = $(element).find(".entry-title a");
+    if (!entryLink) return;
+
+    const title = $(entryLink).text().trim();
+    if (!title || title === "Collection") return;
+
+    const postUrl = $(entryLink).attr("href");
+    if (!postUrl) return;
+
+    searchResults.push({ title, postUrl, source: "baiscopelk" });
+  });
+
+  return searchResults;
+};
+
 const getSources = (keyword: string): SearchSource[] => {
   return [
     {
-      url: `https://www.baiscopelk.com/?s=${encodeURIComponent(keyword)}`,
+      url: encodeURI(`https://www.baiscope.lk/?s=${keyword}`),
       name: "baiscopelk",
     },
     {
-      url: `https://cineru.lk/?s=${encodeURIComponent(keyword)}`,
+      url: encodeURI(`https://cineru.lk/?s=${keyword}`),
       name: "cineru",
     },
     {
-      url: `https://piratelk.com/?s=${encodeURIComponent(keyword)}`,
+      url: encodeURI(`https://piratelk.com/?s=${keyword}`),
       name: "piratelk",
-    }
+    },
   ];
 };
 
@@ -57,14 +84,23 @@ export class SiteCrawler extends EventEmitter {
   public async start() {
     const sources = getSources(this.keyword);
 
-    for (const source of sources) {
-      try {
-        const results = await searchWpSite(source.url, source.name);
-        this.emit("data", results);
-      } catch (e) {
-        console.error(e);
-      }
-    }
+    await Promise.allSettled(
+      sources.map(async (source) => {
+        try {
+          let results;
+
+          if (source.name === "baiscopelk") {
+            results = await scrapeBaiscopeLk(source.url);
+          } else {
+            results = await scrapeWpSite(source.url, source.name);
+          }
+
+          this.emit("data", results);
+        } catch (e) {
+          console.error(e);
+        }
+      })
+    );
 
     this.emit("end");
   }
