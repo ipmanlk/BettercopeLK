@@ -23,21 +23,16 @@ const searchSubtitles = async () => {
 
   searchStatus = true;
 
-  const eventSource = new EventSource("/search/" + keyword);
+  const eventSource = new EventSource(encodeURI(`/search?keyword=${keyword}`));
 
-  eventSource.addEventListener("message", (event) => {
-    console.debug("Message: ", event);
+  eventSource.addEventListener("result", (event) => {
+    console.debug("Result: ", event);
 
     const data = JSON.parse(event.data);
 
     if (data.error) {
-      window.alert(data.error);
-      return;
-    }
-
-    if (data.end) {
-      eventSource.close();
-      searchStatus = false;
+      swal("Error!", data.error, "error");
+      resetState();
       return;
     }
 
@@ -66,6 +61,7 @@ const searchSubtitles = async () => {
     console.error("Error: ", event);
     eventSource.close();
     searchStatus = false;
+    resetState();
   });
 
   eventSource.addEventListener("end", (event) => {
@@ -82,4 +78,10 @@ const downloadSub = (postUrl, source) => {
   setTimeout(() => {
     document.getElementById("btnDownload").click();
   }, 1000);
+};
+
+const resetState = () => {
+  document.querySelector(".s-results").classList.add("hidden");
+  document.querySelector(".s-results").innerHTML = "";
+  document.querySelector(".search-bar").value = "";
 };
