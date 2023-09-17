@@ -9,27 +9,30 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use("/", express.static(`${__dirname}/../public`));
 
-app.get("/search/:keyword", async (req, res) => {
+app.get("/search", async (req, res) => {
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
   res.flushHeaders();
 
-  if (!req.params.keyword) {
-    res.write(`data: ${JSON.stringify({ error: "Invalid keyword" })}\n\n`);
+  const keyword = req.query.keyword;
+
+  if (!keyword || typeof keyword !== "string") {
+    res.write(
+      `event: result\ndata: ${JSON.stringify({ error: "Invalid keyword" })}\n\n`
+    );
     res.end();
     return;
   }
 
-  const siteCrawler = new SiteCrawler(req.params.keyword);
+  const siteCrawler = new SiteCrawler(keyword);
 
   siteCrawler.on("data", (data) => {
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
+    res.write(`event: result\ndata: ${JSON.stringify(data)}\n\n`);
   });
 
   siteCrawler.on("end", () => {
-    res.write("event: end\n");
-    res.write("data: end\n\n");
+    res.write("event: end\ndata: end\n\n");
     res.end();
   });
 
