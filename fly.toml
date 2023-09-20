@@ -4,6 +4,9 @@ app = "bettercopelk"
   builder = "paketobuildpacks/builder:base"
   buildpacks = ["gcr.io/paketo-buildpacks/go"]
 
+[build.args]
+  BP_KEEP_FILES = "public/*"
+
 [[services]]
   internal_port = 8080
   protocol = "tcp"
@@ -14,11 +17,11 @@ app = "bettercopelk"
 
   [[services.ports]]
     handlers = ["http"]
-    port = "80"
+    port = 80
 
   [[services.ports]]
     handlers = ["tls", "http"]
-    port = "443"
+    port = 443
 
   [[services.tcp_checks]]
     interval = 10000
