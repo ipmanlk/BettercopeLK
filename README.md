@@ -4,7 +4,8 @@ _Better way to search & download Sinhala subtitles_
 
 ## Online version
 
-- [https://bettercopelk.fly.dev/](https://bettercopelk.fly.dev/)
+- [https://bettercopelk-io.b4a.run/](https://bettercopelk-io.b4a.run/)
+- [~~https://bettercopelk.fly.dev/~~](https://bettercopelk.fly.dev/)
 
 ## Currently supported sites
 
