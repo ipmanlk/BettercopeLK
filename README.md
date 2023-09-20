@@ -15,15 +15,13 @@ _Better way to search & download Sinhala subtitles_
 
 ## Requirements
 
-- Node.js v16 or newer.
+- Go 1.21+
 
 ## Usage
 
 1. Clone this repository using Git or download as a zip file.
 
-2. Run `npm install` to install dependencies.
-
-3. Run `npm run start:dev` to start the web app.
+2. Run `go run main.go` to start the server.
 
 ## Screenshots
 
