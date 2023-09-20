@@ -10,6 +10,7 @@ _Better way to search & download Sinhala subtitles_
 
 - [Baiscope.lk](https://baiscopelk.com/)
 - [Cineru.lk](https://cineru.lk/)
+- [Piratelk.com](https://piratelk.com/)
 
 ## Requirements
 

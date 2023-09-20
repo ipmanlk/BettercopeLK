@@ -1,38 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>BettercopeLK</title>
-		<link rel="stylesheet" href="./css/style.css" />
-	</head>
-	<body>
-		<div class="logo">
-			<h1>BettercopeLK</h1>
-			<i>Better way to search & download Sinhala subtitles</i>
-		</div>
-		<div class="controls-holder">
-			<form class="controls">
-				<input
-					type="text"
-					placeholder="Type your keyword here..."
-					class="search-bar"
-				/>
-				<input type="submit" value="Search" class="search-btn" />
-			</form>
-		</div>
-		<div class="s-results-holder">
-			<div class="s-results hidden"></div>
-		</div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BettercopeLK</title>
+    <link rel="stylesheet" href="./css/style.css" />
+  </head>
+  <body>
+    <div class="logo">
+      <h1>BettercopeLK</h1>
+      <i>Better way to search & download Sinhala subtitles</i>
+    </div>
+    <div class="controls-holder">
+      <form class="controls">
+        <input
+          type="text"
+          placeholder="Type your keyword here..."
+          class="search-bar"
+        />
+        <input type="submit" value="Search" class="search-btn" />
+      </form>
+    </div>
+    <div class="s-results-holder">
+      <div class="s-results hidden"></div>
+    </div>
 
-		<form method="POST" action="/download" style="display: none">
-			<input type="text" name="postUrl" id="txtPostUrl" value="" />
-			<input type="text" name="source" value="" id="txtSource" />
-			<button type="submit" id="btnDownload">Download</button>
-		</form>
-
-		<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-		<script src="./js/main.js"></script>
-	</body>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script src="./js/main.js"></script>
+  </body>
 </html>

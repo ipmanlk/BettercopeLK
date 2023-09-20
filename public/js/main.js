@@ -21,19 +21,14 @@ searchForm.addEventListener("submit", async (e) => {
   searchResults.classList.remove("hidden");
   searchStatus = true;
 
-  try {
-    eventSource = new EventSource(encodeURI(`/search?keyword=${keyword}`));
-    eventSource.addEventListener("result", handleResult);
-    eventSource.addEventListener("error", handleError);
-    eventSource.addEventListener("end", handleEnd);
-  } catch (error) {
-    console.error("Error:", error);
-    handleError();
-  }
+  eventSource = new EventSource(encodeURI(`/search?query=${keyword}`));
+  eventSource.addEventListener("results", handleResults);
+  eventSource.addEventListener("error", handleError);
+  eventSource.addEventListener("end", handleEnd);
 });
 
-const handleResult = (event) => {
-  console.debug("Result: ", event);
+const handleResults = (event) => {
+  console.debug("Results: ", event);
   const data = JSON.parse(event.data);
 
   if (data.error) {
@@ -49,7 +44,9 @@ const handleResult = (event) => {
 
   const listItems = data.map((result) => {
     return `
-      <div class="s-result" onClick="downloadSub('${result.postUrl}', '${result.source}')">
+      <div class="s-result" onClick="downloadSub('${result.postUrl}', '${
+      result.source
+    }')">
         <h3>${result.title}</h3>
         <h3 class="download-source">${sourceNames[result.source]}</h3>
         <img src="./img/down.svg" class="download-icon" />
@@ -59,16 +56,22 @@ const handleResult = (event) => {
   searchResults.innerHTML += listItems.join("");
 };
 
-const handleError = () => {
-  console.error("Error: ");
+const handleError = (event) => {
+  console.debug("Error: ", event);
+
+  if (event.data === "MISSING_QUERY") {
+    swal("Error!", "Please enter a keyword to search.", "error");
+    resetState();
+  }
+
   if (eventSource) {
     eventSource.close();
   }
   searchStatus = false;
 };
 
-const handleEnd = () => {
-  console.debug("End: ");
+const handleEnd = (event) => {
+  console.debug("End: ", event);
   if (eventSource) {
     eventSource.close();
   }
@@ -77,11 +80,7 @@ const handleEnd = () => {
 
 const downloadSub = (postUrl, source) => {
   swal("Success!", "Subtitle will start downloading shortly.", "success");
-  document.getElementById("txtPostUrl").value = postUrl;
-  document.getElementById("txtSource").value = source;
-  setTimeout(() => {
-    document.getElementById("btnDownload").click();
-  }, 1000);
+  window.open(`/download?link=${postUrl}&source=${source}`, "_blank");
 };
 
 const resetState = () => {
