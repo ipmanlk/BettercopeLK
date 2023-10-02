@@ -21,7 +21,7 @@ searchForm.addEventListener("submit", async (e) => {
   searchResults.classList.remove("hidden");
   searchStatus = true;
 
-  eventSource = new EventSource(encodeURI(`/search?query=${keyword}`));
+  eventSource = new EventSource(encodeURI(`/api/search?query=${keyword}`));
   eventSource.addEventListener("results", handleResults);
   eventSource.addEventListener("error", handleError);
   eventSource.addEventListener("end", handleEnd);
@@ -44,8 +44,9 @@ const handleResults = (event) => {
 
   const listItems = data.map((result) => {
     return `
-      <div class="s-result" onClick="downloadSub('${result.postUrl}', '${result.source
-      }')">
+      <div class="s-result" onClick="downloadSub('${result.postUrl}', '${
+      result.source
+    }')">
         <h3>${result.title}</h3>
         <h3 class="download-source">${sourceNames[result.source]}</h3>
         <img src="./img/down.svg" class="download-icon" />
@@ -79,7 +80,7 @@ const handleEnd = (event) => {
 
 const downloadSub = (postUrl, source) => {
   swal("Success!", "Subtitle will start downloading shortly.", "success");
-  window.open(`/download?postUrl=${postUrl}&source=${source}`, "_blank");
+  window.open(`/api/download?postUrl=${postUrl}&source=${source}`, "_blank");
 };
 
 const resetState = () => {

@@ -15,9 +15,9 @@ func main() {
 	}
 
 	http.HandleFunc("/", handlers.HandlePublicDirServe)
-	http.HandleFunc("/search", handlers.HandleSearch)
-	http.HandleFunc("/download", handlers.HandleDownload)
-	http.HandleFunc("/bulk-download", handlers.HandleBulkDownload)
+	http.HandleFunc("/api/search", handlers.HandleSearch)
+	http.HandleFunc("/api/download", handlers.HandleDownload)
+	http.HandleFunc("/api/bulk-download", handlers.HandleBulkDownload)
 
 	log.Println("listening on", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
