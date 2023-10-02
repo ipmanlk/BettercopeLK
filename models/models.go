@@ -15,11 +15,20 @@ type SearchResult struct {
 }
 
 type SearchSource struct {
-	URL    string `json:"url"`
-	Source Source `json:"name"`
+	URL    string
+	Source Source
 }
 
 type SubtitleData struct {
 	Filename string
 	Content  []byte
+}
+
+type SubtitleRequest struct {
+	PostURL string `json:"post_url"`
+	Source  Source `json:"source"`
+}
+
+type BulkSubtitleRequest struct {
+	Data []SubtitleRequest `json:"data"`
 }

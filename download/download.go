@@ -1,12 +1,15 @@
 package download
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -14,14 +17,14 @@ import (
 	"ipmanlk/bettercopelk/models"
 )
 
-type parseFunction func(doc *goquery.Document) (link string, err error)
+type parseFunction func(doc *goquery.Document) (fileUrl string, err error)
 
-func GetSubtitle(url string, source models.Source) (*models.SubtitleData, error) {
+func GetSubtitle(postUrl string, source models.Source) (*models.SubtitleData, error) {
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 	}
 
-	link, err := getDownloadLink(url, source)
+	link, err := getDownloadLink(postUrl, source)
 	if err != nil {
 		return nil, err
 	}
@@ -66,9 +69,39 @@ func GetSubtitle(url string, source models.Source) (*models.SubtitleData, error)
 	}, nil
 }
 
-func GetBulkSubtitles() {}
+func GetSubtitles(subtitleRequests []models.SubtitleRequest) (*models.SubtitleData, error) {
+	var wg sync.WaitGroup
 
-func getDownloadLink(url string, source models.Source) (link string, err error) {
+	resultCh := make(chan *models.SubtitleData, len(subtitleRequests))
+
+	for _, request := range subtitleRequests {
+		wg.Add(1)
+
+		go func(request models.SubtitleRequest) {
+			defer wg.Done()
+			subData, err := GetSubtitle(request.PostURL, request.Source)
+
+			if err != nil {
+				return
+			}
+
+			resultCh <- subData
+		}(request)
+	}
+
+	wg.Wait()
+	close(resultCh)
+
+	var subtitleData []*models.SubtitleData
+
+	for subtitle := range resultCh {
+		subtitleData = append(subtitleData, subtitle)
+	}
+
+	return createZipFile(subtitleData)
+}
+
+func getDownloadLink(postUrl string, source models.Source) (link string, err error) {
 	parseFunc := parseBaiscopeLink
 
 	switch source {
@@ -78,7 +111,7 @@ func getDownloadLink(url string, source models.Source) (link string, err error) 
 		parseFunc = parsePiratelkLink
 	}
 
-	return parseDownloadLink(url, parseFunc)
+	return parseDownloadLink(postUrl, parseFunc)
 }
 
 func parseBaiscopeLink(doc *goquery.Document) (link string, err error) {
@@ -105,11 +138,11 @@ func parsePiratelkLink(doc *goquery.Document) (link string, err error) {
 	return dLink, nil
 }
 
-func parseDownloadLink(url string, parseFunc parseFunction) (link string, err error) {
+func parseDownloadLink(postUrl string, parseFunc parseFunction) (link string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, postUrl, nil)
 	if err != nil {
 		return "", err
 	}
@@ -128,8 +161,8 @@ func parseDownloadLink(url string, parseFunc parseFunction) (link string, err er
 	return parseFunc(doc)
 }
 
-func getFilenameFromURL(url string) string {
-	parts := strings.Split(strings.TrimSuffix(url, "/"), "/")
+func getFilenameFromURL(fileUrl string) string {
+	parts := strings.Split(strings.TrimSuffix(fileUrl, "/"), "/")
 	filename := parts[len(parts)-1]
 
 	if filename == "" {
@@ -154,4 +187,43 @@ func getFilenameFromHeader(header string) string {
 		return match[1]
 	}
 	return "subtitle.zip"
+}
+
+func createZipFile(subtitleData []*models.SubtitleData) (*models.SubtitleData, error) {
+	var buf bytes.Buffer
+	zipWriter := zip.NewWriter(&buf)
+
+	for _, data := range subtitleData {
+		// Create a new file header
+		fileHeader := &zip.FileHeader{
+			Name:   data.Filename,
+			Method: zip.Deflate,
+		}
+
+		// Create a new file in the zip archive
+		writer, err := zipWriter.CreateHeader(fileHeader)
+		if err != nil {
+			return nil, err
+		}
+
+		// Write the content of the file to the zip archive
+		_, err = writer.Write(data.Content)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Close the zip writer
+	err := zipWriter.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a new SubtitleData struct to hold all subtitles
+	zippedData := models.SubtitleData{
+		Filename: "bulk_subtitles.zip",
+		Content:  buf.Bytes(),
+	}
+
+	return &zippedData, nil
 }

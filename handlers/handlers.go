@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -127,5 +128,45 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to write response", http.StatusInternalServerError)
 		return
 	}
+}
 
+func HandleBulkDownload(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse JSON request data
+	body, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		http.Error(w, "Failed to parse the request", http.StatusBadRequest)
+		return
+	}
+
+	var requestData models.BulkSubtitleRequest
+
+	err = json.Unmarshal(body, &requestData)
+
+	if err != nil {
+		http.Error(w, "Failed to parse the request", http.StatusBadRequest)
+		return
+	}
+	
+	data, err := download.GetSubtitles(requestData.Data)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Failed to download subtitles", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/zip")
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, data.Filename))
+
+	_, err = w.Write(data.Content)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Failed to write response", http.StatusInternalServerError)
+		return
+	}
 }
