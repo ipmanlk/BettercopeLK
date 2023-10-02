@@ -44,9 +44,8 @@ const handleResults = (event) => {
 
   const listItems = data.map((result) => {
     return `
-      <div class="s-result" onClick="downloadSub('${result.postUrl}', '${
-      result.source
-    }')">
+      <div class="s-result" onClick="downloadSub('${result.postUrl}', '${result.source
+      }')">
         <h3>${result.title}</h3>
         <h3 class="download-source">${sourceNames[result.source]}</h3>
         <img src="./img/down.svg" class="download-icon" />
@@ -80,7 +79,7 @@ const handleEnd = (event) => {
 
 const downloadSub = (postUrl, source) => {
   swal("Success!", "Subtitle will start downloading shortly.", "success");
-  window.open(`/download?link=${postUrl}&source=${source}`, "_blank");
+  window.open(`/download?postUrl=${postUrl}&source=${source}`, "_blank");
 };
 
 const resetState = () => {

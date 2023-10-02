@@ -25,7 +25,7 @@ type SubtitleData struct {
 }
 
 type SubtitleRequest struct {
-	PostURL string `json:"post_url"`
+	PostURL string `json:"postUrl"`
 	Source  Source `json:"source"`
 }
 

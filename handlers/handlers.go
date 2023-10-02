@@ -81,10 +81,10 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	link := strings.TrimSpace(r.URL.Query().Get("link"))
+	postUrl := strings.TrimSpace(r.URL.Query().Get("postUrl"))
 	source := strings.TrimSpace(r.URL.Query().Get("source"))
 
-	if link == "" {
+	if postUrl == "" {
 		http.Error(w, "Missing link", http.StatusBadRequest)
 		return
 	}
@@ -94,23 +94,13 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// check if given source is valid
-	validSources := []models.Source{models.SourceBaiscopelk, models.SourceCineru, models.SourcePiratelk}
-	isValidSource := false
-	for _, validSource := range validSources {
-		if models.Source(source) == validSource {
-			isValidSource = true
-			break
-		}
-	}
-
-	if !isValidSource {
+	if !isValidSource(source) {
 		http.Error(w, "Invalid source", http.StatusBadRequest)
 		return
 	}
 
-	// download subtitle
-	data, err := download.GetSubtitle(link, models.Source(source))
+	// send subtitle zip file
+	data, err := download.GetSubtitle(postUrl, models.Source(source))
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, "Failed to download subtitle", http.StatusInternalServerError)
@@ -152,7 +142,21 @@ func HandleBulkDownload(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to parse the request", http.StatusBadRequest)
 		return
 	}
-	
+
+	// Validate request data
+	if len(requestData.Data) == 0 {
+		http.Error(w, "Please provide at least one URL to download", http.StatusBadRequest)
+		return
+	}
+
+	for _, subtitleRequest := range requestData.Data {
+		if !isValidSource(string(subtitleRequest.Source)) {
+			http.Error(w, "Your request contains invalid sources", http.StatusBadRequest)
+			return
+		}
+	}
+
+	// Send merged zip file
 	data, err := download.GetSubtitles(requestData.Data)
 	if err != nil {
 		fmt.Println(err)
@@ -169,4 +173,19 @@ func HandleBulkDownload(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to write response", http.StatusInternalServerError)
 		return
 	}
+}
+
+// check if given source is valid
+func isValidSource(source string) bool {
+	validSources := []models.Source{models.SourceBaiscopelk, models.SourceCineru, models.SourcePiratelk}
+
+	isValid := false
+	for _, validSource := range validSources {
+		if models.Source(source) == validSource {
+			isValid = true
+			break
+		}
+	}
+
+	return isValid
 }
