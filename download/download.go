@@ -4,18 +4,19 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"ipmanlk/bettercopelk/models"
 	"net/http"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+
+	"ipmanlk/bettercopelk/models"
 )
 
 type parseFunction func(doc *goquery.Document) (link string, err error)
 
-func GetSubtitle(url, source string) (*models.SubtitleData, error) {
+func GetSubtitle(url string, source models.Source) (*models.SubtitleData, error) {
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 	}
@@ -29,7 +30,7 @@ func GetSubtitle(url, source string) (*models.SubtitleData, error) {
 	var downloadBody []byte
 	var downloadErr error
 
-	if source == "baiscopelk" {
+	if source == models.SourceBaiscopelk {
 		resp, err := client.Post(link, "application/x-www-form-urlencoded", nil)
 		if err != nil {
 			return nil, err
@@ -65,15 +66,15 @@ func GetSubtitle(url, source string) (*models.SubtitleData, error) {
 	}, nil
 }
 
-func getDownloadLink(url string, source string) (link string, err error) {
+func GetBulkSubtitles() {}
+
+func getDownloadLink(url string, source models.Source) (link string, err error) {
 	parseFunc := parseBaiscopeLink
 
 	switch source {
-	case "baiscopelk":
-		parseFunc = parseBaiscopeLink
-	case "cineru":
+	case models.SourceCineru:
 		parseFunc = parseCineruLink
-	case "piratelk":
+	case models.SourcePiratelk:
 		parseFunc = parsePiratelkLink
 	}
 

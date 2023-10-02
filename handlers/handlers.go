@@ -3,12 +3,13 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"ipmanlk/bettercopelk/download"
-	"ipmanlk/bettercopelk/models"
-	"ipmanlk/bettercopelk/search"
 	"log"
 	"net/http"
 	"strings"
+
+	"ipmanlk/bettercopelk/download"
+	"ipmanlk/bettercopelk/models"
+	"ipmanlk/bettercopelk/search"
 )
 
 func HandlePublicDirServe(w http.ResponseWriter, r *http.Request) {
@@ -92,7 +93,23 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := download.GetSubtitle(link, source)
+	// check if given source is valid
+	validSources := []models.Source{models.SourceBaiscopelk, models.SourceCineru, models.SourcePiratelk}
+	isValidSource := false
+	for _, validSource := range validSources {
+		if models.Source(source) == validSource {
+			isValidSource = true
+			break
+		}
+	}
+
+	if !isValidSource {
+		http.Error(w, "Invalid source", http.StatusBadRequest)
+		return
+	}
+
+	// download subtitle
+	data, err := download.GetSubtitle(link, models.Source(source))
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, "Failed to download subtitle", http.StatusInternalServerError)

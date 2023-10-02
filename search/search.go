@@ -3,20 +3,19 @@ package search
 import (
 	"context"
 	"fmt"
+	"github.com/PuerkitoBio/goquery"
 	"ipmanlk/bettercopelk/models"
 	"log"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/PuerkitoBio/goquery"
 )
 
-type parseFunction func(source string, doc *goquery.Document) []models.SearchResult
+type parseFunction func(source models.Source, doc *goquery.Document) []models.SearchResult
 
 func SearchSites(query string, resultsChan chan<- []models.SearchResult) {
-	sources := getSources(query)
+	sources := getSearchSources(query)
 
 	var wg sync.WaitGroup
 
@@ -24,11 +23,11 @@ func SearchSites(query string, resultsChan chan<- []models.SearchResult) {
 		wg.Add(1)
 
 		praseFunc := parseGenericWpResponse
-		if source.Name == "baiscopelk" {
+		if source.Source == models.SourceBaiscopelk {
 			praseFunc = parseBaiscopeLkResponse
 		}
 
-		go scrapeSite(source.URL, source.Name, resultsChan, &wg, praseFunc)
+		go scrapeSite(source.URL, source.Source, resultsChan, &wg, praseFunc)
 	}
 
 	go func() {
@@ -37,7 +36,7 @@ func SearchSites(query string, resultsChan chan<- []models.SearchResult) {
 	}()
 }
 
-func scrapeSite(url, source string, resultsChan chan<- []models.SearchResult, wg *sync.WaitGroup, parseFunc parseFunction) {
+func scrapeSite(url string, source models.Source, resultsChan chan<- []models.SearchResult, wg *sync.WaitGroup, parseFunc parseFunction) {
 	defer wg.Done()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
@@ -67,7 +66,7 @@ func scrapeSite(url, source string, resultsChan chan<- []models.SearchResult, wg
 	resultsChan <- searchResults
 }
 
-func parseBaiscopeLkResponse(source string, doc *goquery.Document) []models.SearchResult {
+func parseBaiscopeLkResponse(source models.Source, doc *goquery.Document) []models.SearchResult {
 	searchResults := []models.SearchResult{}
 
 	doc.Find("article.post").Each(func(i int, s *goquery.Selection) {
@@ -89,7 +88,7 @@ func parseBaiscopeLkResponse(source string, doc *goquery.Document) []models.Sear
 	return searchResults
 }
 
-func parseGenericWpResponse(source string, doc *goquery.Document) []models.SearchResult {
+func parseGenericWpResponse(source models.Source, doc *goquery.Document) []models.SearchResult {
 	searchResults := []models.SearchResult{}
 
 	doc.Find(".item-list").Each(func(i int, s *goquery.Selection) {
@@ -110,19 +109,19 @@ func parseGenericWpResponse(source string, doc *goquery.Document) []models.Searc
 	return searchResults
 }
 
-func getSources(keyword string) []models.SearchSource {
+func getSearchSources(keyword string) []models.SearchSource {
 	return []models.SearchSource{
 		{
-			URL:  fmt.Sprintf("https://www.baiscope.lk/?s=%s", keyword),
-			Name: "baiscopelk",
+			URL:    fmt.Sprintf("https://www.baiscope.lk/?s=%s", keyword),
+			Source: models.SourceBaiscopelk,
 		},
 		{
-			URL:  fmt.Sprintf("https://cineru.lk/?s=%s", keyword),
-			Name: "cineru",
+			URL:    fmt.Sprintf("https://cineru.lk/?s=%s", keyword),
+			Source: models.SourceCineru,
 		},
 		{
-			URL:  fmt.Sprintf("https://piratelk.com/?s=%s", keyword),
-			Name: "piratelk",
+			URL:    fmt.Sprintf("https://piratelk.com/?s=%s", keyword),
+			Source: models.SourcePiratelk,
 		},
 	}
 }
