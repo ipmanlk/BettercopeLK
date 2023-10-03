@@ -2,7 +2,9 @@
 
 _Better way to search & download Sinhala subtitles_
 
-## Online version
+> **Disclaimer:** This project is an experiment involving Go programming, deployment methods, and platforms. It offers Sinhala subtitle search and download features, but please be cautious as it may not receive regular updates and is not meant for production use. Its functionality and availability may change without prior notice.
+
+## Online versions
 
 - [https://bettercopelk.fly.dev/](https://bettercopelk.fly.dev/)
 - [https://bettercopelk-io.b4a.run/](https://bettercopelk-io.b4a.run/)
