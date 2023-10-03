@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"net/http"
 	"strings"
@@ -11,11 +12,12 @@ import (
 	"ipmanlk/bettercopelk/download"
 	"ipmanlk/bettercopelk/models"
 	"ipmanlk/bettercopelk/search"
+	"ipmanlk/bettercopelk/web"
 )
 
 func HandlePublicDirServe(w http.ResponseWriter, r *http.Request) {
-	dir := "./public"
-	fileServer := http.FileServer(http.Dir(dir))
+	serverRoot, _ := fs.Sub(web.PublicFS, "public")
+	fileServer := http.FileServer(http.FS(serverRoot))
 	fileServer.ServeHTTP(w, r)
 }
 
