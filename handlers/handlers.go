@@ -96,7 +96,7 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !isValidSource(source) {
+	if !isValidSource(models.Source(source)) {
 		http.Error(w, "Invalid source", http.StatusBadRequest)
 		return
 	}
@@ -152,7 +152,7 @@ func HandleBulkDownload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, subtitleRequest := range requestData.Data {
-		if !isValidSource(string(subtitleRequest.Source)) {
+		if !isValidSource(models.Source(subtitleRequest.Source)) {
 			http.Error(w, "Your request contains invalid sources", http.StatusBadRequest)
 			return
 		}
@@ -178,16 +178,13 @@ func HandleBulkDownload(w http.ResponseWriter, r *http.Request) {
 }
 
 // check if given source is valid
-func isValidSource(source string) bool {
-	validSources := []models.Source{models.SourceBaiscopelk, models.SourceCineru, models.SourcePiratelk}
+var validSources = map[models.Source]struct{}{
+	models.SourceBaiscopelk: {},
+	models.SourceCineru:     {},
+	models.SourcePiratelk:   {},
+}
 
-	isValid := false
-	for _, validSource := range validSources {
-		if models.Source(source) == validSource {
-			isValid = true
-			break
-		}
-	}
-
-	return isValid
+func isValidSource(source models.Source) bool {
+	_, exists := validSources[source]
+	return exists
 }
