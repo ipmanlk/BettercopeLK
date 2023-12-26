@@ -76,6 +76,11 @@ const handleEnd = (event) => {
     eventSource.close();
   }
   searchStatus = false;
+
+  if (searchResults.innerHTML.includes("loading.gif")) {
+    resetState();
+    swal("Sorry!", "No results found.", "error");
+  }
 };
 
 const downloadSub = (postUrl, source) => {
