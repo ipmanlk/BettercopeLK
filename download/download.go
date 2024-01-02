@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"path"
 	"regexp"
-	"strings"
 	"sync"
 	"time"
 
@@ -19,12 +20,43 @@ import (
 
 type parseFunction func(doc *goquery.Document) (fileUrl string, err error)
 
-func GetSubtitle(postUrl string, source models.Source) (*models.SubtitleData, error) {
+type sourceConfig struct {
+	Selector  string
+	Attribute string
+	Method    string // GET or POST
+}
+
+var sourceConfigs = map[models.Source]sourceConfig{
+	models.SourceBaiscopelk: {
+		Selector:  "a:has(img[src='https://baiscopelk.com/download.png'])",
+		Attribute: "href",
+		Method:    http.MethodPost,
+	},
+	models.SourceCineru: {
+		Selector:  "#btn-download",
+		Attribute: "data-link",
+		Method:    http.MethodGet,
+	},
+	models.SourcePiratelk: {
+		Selector:  ".download-button",
+		Attribute: "href",
+		Method:    http.MethodGet,
+	},
+	models.SourceZoomlk: {
+		Selector:  ".download-button",
+		Attribute: "href",
+		Method:    http.MethodGet,
+	},
+}
+
+func GetSubtitle(source models.Source, postUrl string) (*models.SubtitleData, error) {
+	cfg := sourceConfigs[source]
+
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 	}
 
-	link, err := getDownloadLink(postUrl, source)
+	link, err := getDownloadURL(cfg, postUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +65,7 @@ func GetSubtitle(postUrl string, source models.Source) (*models.SubtitleData, er
 	var downloadBody []byte
 	var downloadErr error
 
-	if source == models.SourceBaiscopelk {
+	if cfg.Method == http.MethodPost {
 		resp, err := client.Post(link, "application/x-www-form-urlencoded", nil)
 		if err != nil {
 			return nil, err
@@ -45,9 +77,7 @@ func GetSubtitle(postUrl string, source models.Source) (*models.SubtitleData, er
 			return nil, err
 		}
 
-		contentDisposition := resp.Header.Get("Content-Disposition")
-		filename = getFilenameFromHeader(contentDisposition)
-
+		filename = getFilename(resp, link)
 	} else {
 		resp, err := client.Get(link)
 		if err != nil {
@@ -60,7 +90,7 @@ func GetSubtitle(postUrl string, source models.Source) (*models.SubtitleData, er
 			return nil, err
 		}
 
-		filename = getFilenameFromURL(link)
+		filename = getFilename(resp, link)
 	}
 
 	return &models.SubtitleData{
@@ -79,7 +109,7 @@ func GetSubtitles(subtitleRequests []models.SubtitleRequest) (*models.SubtitleDa
 
 		go func(request models.SubtitleRequest) {
 			defer wg.Done()
-			subData, err := GetSubtitle(request.PostURL, request.Source)
+			subData, err := GetSubtitle(request.Source, request.PostURL)
 
 			if err != nil {
 				return
@@ -101,44 +131,7 @@ func GetSubtitles(subtitleRequests []models.SubtitleRequest) (*models.SubtitleDa
 	return createZipFile(subtitleData)
 }
 
-func getDownloadLink(postUrl string, source models.Source) (link string, err error) {
-	parseFunc := parseBaiscopeLink
-
-	switch source {
-	case models.SourceCineru:
-		parseFunc = parseCineruLink
-	case models.SourcePiratelk:
-		parseFunc = parsePiratelkLink
-	}
-
-	return parseDownloadLink(postUrl, parseFunc)
-}
-
-func parseBaiscopeLink(doc *goquery.Document) (link string, err error) {
-	dLink, exists := doc.Find("img[src='https://baiscopelk.com/download.png']").Parent().Attr("href")
-	if !exists {
-		return "", fmt.Errorf("Download link not found")
-	}
-	return dLink, nil
-}
-
-func parseCineruLink(doc *goquery.Document) (link string, err error) {
-	dLink, exists := doc.Find("#btn-download").Attr("data-link")
-	if !exists {
-		return "", fmt.Errorf("Download link not found")
-	}
-	return dLink, nil
-}
-
-func parsePiratelkLink(doc *goquery.Document) (link string, err error) {
-	dLink, exists := doc.Find(".download-button").Attr("href")
-	if !exists {
-		return "", fmt.Errorf("Download link not found")
-	}
-	return dLink, nil
-}
-
-func parseDownloadLink(postUrl string, parseFunc parseFunction) (link string, err error) {
+func getDownloadURL(cfg sourceConfig, postUrl string) (link string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -158,35 +151,12 @@ func parseDownloadLink(postUrl string, parseFunc parseFunction) (link string, er
 		return "", err
 	}
 
-	return parseFunc(doc)
-}
-
-func getFilenameFromURL(fileUrl string) string {
-	parts := strings.Split(strings.TrimSuffix(fileUrl, "/"), "/")
-	filename := parts[len(parts)-1]
-
-	if filename == "" {
-		return "subtitle.zip"
+	link, exists := doc.Find(cfg.Selector).First().Attr(cfg.Attribute)
+	if !exists {
+		return "", fmt.Errorf("no download link found")
 	}
 
-	if strings.Contains(filename, "?") {
-		filename = parts[len(parts)-2]
-	}
-
-	if !strings.Contains(filename, ".") {
-		filename += ".zip"
-	}
-
-	return filename
-}
-
-func getFilenameFromHeader(header string) string {
-	headerRegex := regexp.MustCompile(`filename=["']([^"']+)["']`)
-	match := headerRegex.FindStringSubmatch(header)
-	if len(match) == 2 {
-		return match[1]
-	}
-	return "subtitle.zip"
+	return link, nil
 }
 
 func createZipFile(subtitleData []*models.SubtitleData) (*models.SubtitleData, error) {
@@ -226,4 +196,55 @@ func createZipFile(subtitleData []*models.SubtitleData) (*models.SubtitleData, e
 	}
 
 	return &zippedData, nil
+}
+
+func getFilename(resp *http.Response, downloadUrl string) string {
+	validExtRegex := regexp.MustCompile(`\.(zip|rar|7z|tar)$`)
+
+	// 1. check Content-Disposition header
+	contentDisposition := resp.Header.Get("Content-Disposition")
+	if contentDisposition != "" {
+		standardRegex := regexp.MustCompile(`filename=["']([^"']+)["']`)
+		extendedRegex := regexp.MustCompile(`filename\*\s*=\s*UTF-8''([^;]+)`)
+
+		standardMatch := standardRegex.FindStringSubmatch(contentDisposition)
+		if len(standardMatch) == 2 && validExtRegex.MatchString(standardMatch[1]) {
+			return standardMatch[1]
+		}
+
+		extendedMatch := extendedRegex.FindStringSubmatch(contentDisposition)
+		if len(extendedMatch) == 2 {
+			decodedFilename, err := url.QueryUnescape(extendedMatch[1])
+			if err == nil && validExtRegex.MatchString(decodedFilename) {
+				return decodedFilename
+			}
+		}
+	}
+
+	// decode URL to handle any encoded characters
+	decodedURL, err := url.QueryUnescape(downloadUrl)
+	if err != nil {
+		decodedURL = downloadUrl // Use the original URL if decoding fails
+	}
+
+	// 2. extract filename from URL's path
+	parsedURL, err := url.Parse(decodedURL)
+	if err == nil {
+		pathFilename := path.Base(parsedURL.Path)
+		if validExtRegex.MatchString(pathFilename) {
+			return pathFilename
+		}
+	}
+
+	// 3. Check URL Query Parameters
+	for _, param := range parsedURL.Query() {
+		for _, p := range param {
+			if validExtRegex.MatchString(p) {
+				return p
+			}
+		}
+	}
+
+	// 4. Default to "subtitle.zip"
+	return "subtitle.zip"
 }
