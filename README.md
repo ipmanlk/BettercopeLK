@@ -6,7 +6,6 @@ _Better way to search & download Sinhala subtitles_
 
 ## Online versions
 
-- [https://bettercopelk.fly.dev/](https://bettercopelk.fly.dev/)
 - [https://bettercopelk-io.b4a.run/](https://bettercopelk-io.b4a.run/)
 
 ## Currently supported sites
@@ -27,7 +26,7 @@ _Better way to search & download Sinhala subtitles_
 
 ## API Documentation
 
-**URL**: `https://bettercopelk.fly.dev/api`
+**URL**: `https://bettercopelk-io.b4a.run/api`
 
 **Supported source names:**
 - `baiscopelk`
