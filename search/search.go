@@ -97,7 +97,7 @@ func scrapeAndParseSource(cfg sourceConfig, query string) ([]models.SearchResult
 		return nil, err
 	}
 
-	var results []models.SearchResult
+	var results []models.SearchResult = []models.SearchResult{}
 	doc.Find(cfg.Selector).Each(func(_ int, s *goquery.Selection) {
 		postURL, exists := s.Attr("href")
 		if !exists {
