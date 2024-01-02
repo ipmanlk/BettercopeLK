@@ -47,7 +47,7 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 	// Create a channel to send scraped results to the SSE client
 	resultsChan := make(chan []models.SearchResult, 3)
 
-	search.SearchSites(query, resultsChan)
+	search.SearchSources(query, resultsChan)
 
 	for results := range resultsChan {
 		// Serialize the result as JSON
@@ -102,7 +102,7 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// send subtitle zip file
-	data, err := download.GetSubtitle(postUrl, models.Source(source))
+	data, err := download.GetSubtitle(models.Source(source), postUrl)
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, "Failed to download subtitle", http.StatusInternalServerError)
@@ -182,6 +182,7 @@ var validSources = map[models.Source]struct{}{
 	models.SourceBaiscopelk: {},
 	models.SourceCineru:     {},
 	models.SourcePiratelk:   {},
+	models.SourceZoomlk:     {},
 }
 
 func isValidSource(source models.Source) bool {

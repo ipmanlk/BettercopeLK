@@ -6,6 +6,7 @@ const (
 	SourceBaiscopelk Source = "baiscopelk"
 	SourceCineru     Source = "cineru"
 	SourcePiratelk   Source = "piratelk"
+	SourceZoomlk     Source = "zoomlk"
 )
 
 type SearchResult struct {
