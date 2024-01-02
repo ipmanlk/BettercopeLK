@@ -14,7 +14,7 @@ const sourceNames = {
 };
 
 function App() {
-  const [searchResults, setSearchResults] = useState([]);
+  const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   return html`
@@ -24,24 +24,28 @@ function App() {
     </div>
 
     ${SearchBox({
-      setSearchResults,
+      results,
+      setResults,
       setIsLoading,
       isLoading,
     })}
     ${ResultsBox({
-      results: searchResults,
+      results,
       isLoading,
     })}
   `;
 }
 
-function SearchBox({ setSearchResults, setIsLoading, isLoading }) {
+function SearchBox({ results, setResults, setIsLoading, isLoading }) {
   const [query, setQuery] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isLoading) return;
+
     setIsLoading(true);
+    setResults([]);
+    window.hasResults = false;
 
     const eventSource = new EventSource(
       encodeURI(`/api/search?query=${query}`)
@@ -50,7 +54,10 @@ function SearchBox({ setSearchResults, setIsLoading, isLoading }) {
       console.debug("Results: ", event);
       try {
         const data = JSON.parse(event.data);
-        setSearchResults((prev) => [...prev, ...data]);
+        setResults((prev) => [...prev, ...data]);
+        if (data.length > 0) {
+          window.hasResults = true;
+        }
       } catch (e) {
         console.error(e);
       }
@@ -59,7 +66,6 @@ function SearchBox({ setSearchResults, setIsLoading, isLoading }) {
       console.debug("Error: ", event);
       if (event.data === "MISSING_QUERY") {
         swal("Error!", "Please enter a keyword to search.", "error");
-        resetState();
       }
       if (eventSource) {
         eventSource.close();
@@ -72,6 +78,14 @@ function SearchBox({ setSearchResults, setIsLoading, isLoading }) {
         eventSource.close();
       }
       setIsLoading(false);
+
+      if (!window.hasResults) {
+        swal(
+          "Oops!",
+          "We couldn't find any subtitles for your search query.",
+          "error"
+        );
+      }
     });
   };
 
@@ -85,7 +99,12 @@ function SearchBox({ setSearchResults, setIsLoading, isLoading }) {
           value=${query}
           onInput=${(e) => setQuery(e.target.value)}
         />
-        <input type="submit" value="Search" class="search-btn" />
+        <input
+          type="submit"
+          value="Search"
+          class="search-btn"
+          disabled=${isLoading}
+        />
       </form>
     </div>
   `;
