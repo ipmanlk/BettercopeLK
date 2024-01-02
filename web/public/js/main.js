@@ -2,6 +2,7 @@ const sourceNames = {
   baiscopelk: "Baiscope.lk",
   cineru: "Cineru.lk",
   piratelk: "Piratelk.com",
+  zoomlk: "Zoom.lk",
 };
 
 const loadingHTML = `<center><img class="spinner-img" src="./img/loading.gif" width="100px" /></center>`;
