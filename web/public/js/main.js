@@ -16,6 +16,7 @@ const sourceNames = {
 function App() {
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedResults, setSelectedResults] = useState([]);
 
   return html`
     <div class="logo">
@@ -32,6 +33,8 @@ function App() {
     ${ResultsBox({
       results,
       isLoading,
+      selectedResults,
+      setSelectedResults,
     })}
   `;
 }
@@ -110,10 +113,62 @@ function SearchBox({ results, setResults, setIsLoading, isLoading }) {
   `;
 }
 
-function ResultsBox({ results, isLoading }) {
+function ResultsBox({
+  results,
+  isLoading,
+  selectedResults,
+  setSelectedResults,
+}) {
   const handleDownload = (url, source) => {
-    swal("Success!", "Subtitle will start downloading shortly.", "success");
-    window.open(`/api/download?postUrl=${url}&source=${source}`, "_blank");
+    // Single subtitle download
+    if (selectedResults.length === 0) {
+      swal("Success!", "Subtitle will start downloading shortly.", "success");
+      window.open(`/api/download?postUrl=${url}&source=${source}`, "_blank");
+      return;
+    }
+
+    // Bulk download
+    // send selected results array as json to /api/bulk-download
+    // it will return application/zip with Content-Type and Content-Disposition headers
+    // so browser should save that file automatically
+    const data = JSON.stringify({ data: selectedResults });
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/bulk-download", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.responseType = "blob";
+    xhr.onload = function () {
+      if (this.status === 200) {
+        const filename = "subtitles.zip";
+        const blob = new Blob([this.response], { type: "application/zip" });
+        const link = document.createElement("a");
+        link.href = window.URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+      }
+    };
+    xhr.onerror = function () {
+      swal("Error!", "Something went wrong. Please try again.", "error");
+    };
+    xhr.send(data);
+
+    // Reset selected results
+    setSelectedResults([]);
+  };
+
+  const handleSelect = (e, result) => {
+    if (e.target.checked) {
+      setSelectedResults((prev) => {
+        if (prev.includes(result)) {
+          return prev;
+        }
+        return [...prev, result];
+      });
+      return;
+    }
+
+    setSelectedResults((prev) => {
+      return prev.filter((item) => item !== result);
+    });
   };
 
   return html`
@@ -126,13 +181,20 @@ function ResultsBox({ results, isLoading }) {
           : ""}
         ${results.map(
           (result) => html`
-            <div
-              class="s-result"
-              onClick=${() => handleDownload(result.postUrl, result.source)}
-            >
-              <h3>${result.title}</h3>
-              <h3 class="download-source">${sourceNames[result.source]}</h3>
-              <img src="./img/down.svg" class="download-icon" />
+            <div class="s-result">
+              <input
+                type="checkbox"
+                onChange=${(e) => handleSelect(e, result)}
+                checked=${selectedResults.includes(result)}
+              />
+              <div
+                class="flex-justify-between"
+                onClick=${() => handleDownload(result.postUrl, result.source)}
+              >
+                <h3>${result.title}</h3>
+                <h3 class="download-source">${sourceNames[result.source]}</h3>
+                <img src="./img/down.svg" class="download-icon" />
+              </div>
             </div>
           `
         )}
