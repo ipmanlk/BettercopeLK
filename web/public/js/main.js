@@ -157,6 +157,16 @@ function ResultsBox({
 
   const handleSelect = (e, result) => {
     if (e.target.checked) {
+      if (selectedResults.length > 20) {
+        e.target.checked = false;
+        swal(
+          "Oops!",
+          "You can't bulk download more than 20 subtitles at once.",
+          "error"
+        );
+        return;
+      }
+
       setSelectedResults((prev) => {
         if (prev.includes(result)) {
           return prev;
