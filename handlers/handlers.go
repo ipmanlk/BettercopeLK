@@ -151,6 +151,11 @@ func HandleBulkDownload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(requestData.Data) > 20 {
+		http.Error(w, "Please provide at most 20 URLs to download", http.StatusBadRequest)
+		return
+	}
+
 	for _, subtitleRequest := range requestData.Data {
 		if !isValidSource(models.Source(subtitleRequest.Source)) {
 			http.Error(w, "Your request contains invalid sources", http.StatusBadRequest)
