@@ -198,7 +198,7 @@ function ResultsBox({
                 checked=${selectedResults.includes(result)}
               />
               <div
-                class="flex-justify-between"
+                class="s-result-content"
                 onClick=${() => handleDownload(result.postUrl, result.source)}
               >
                 <h3>${result.title}</h3>

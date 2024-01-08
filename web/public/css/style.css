@@ -180,7 +180,8 @@ body {
   display: none;
 }
 
-.flex-justify-between {
+.s-result-content {
   display: flex;
   justify-content: space-between;
+  width: 100%;
 }
