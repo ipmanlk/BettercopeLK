@@ -6,7 +6,7 @@ _Better way to search & download Sinhala subtitles_
 
 ## Online versions
 
-- [https://bettercopelk-io.b4a.run/](https://bettercopelk-io.b4a.run/)
+- [https://bettercopelk.navinda.xyz](https://bettercopelk.navinda.xyz)
 
 ## Currently supported sites
 
@@ -26,26 +26,33 @@ _Better way to search & download Sinhala subtitles_
 
 ## API Documentation
 
-**URL**: `https://bettercopelk-io.b4a.run/api`
+**URL**: `https://bettercopelk.navinda.xyz/api`
 
 **Supported source names:**
+
 - `baiscopelk`
 - `cineru`
 - `piratelk`
 
 ### Search subtitles (SSE endpoint)
+
 GET `/search?query=movie_name`
+
 - **Description**: Get a list of subtitles for a given movie name. This is a Server-Sent Events (SSE) endpoint.
 - **Method**: GET
 
 ### Download subtitle
+
 GET `/download?postUrl=subtitle_post_url&source=source_name`
+
 - **Description**: Download a subtitle from a given source.
 - **Method**: GET
 - **Response Content-Type**: `application/zip`
 
 ### Bulk download subtitles
+
 POST `/bulk-download`
+
 - **Description**: Download multiple subtitles as a single zip file.
 - **Method**: POST
 - **Request Format**: JSON
