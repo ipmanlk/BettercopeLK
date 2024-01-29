@@ -31,7 +31,7 @@ var sourceConfigs = map[models.Source]sourceConfig{
 		Source:         models.SourceCineru,
 		URL:            "https://cineru.lk/?s=%s",
 		Selector:       ".item-list .post-box-title a",
-		IgnorePatterns: []string{"Collection"},
+		IgnorePatterns: []string{"Collection", "tv_series"},
 	},
 	models.SourcePiratelk: {
 		Source:         models.SourcePiratelk,
@@ -109,7 +109,7 @@ func scrapeAndParseSource(cfg sourceConfig, query string) ([]models.SearchResult
 			return
 		}
 
-		if shouldIgnoreTitle(postTitle, cfg.IgnorePatterns) {
+		if shouldIgnore(postURL, postTitle, cfg.IgnorePatterns) {
 			return
 		}
 
@@ -118,9 +118,9 @@ func scrapeAndParseSource(cfg sourceConfig, query string) ([]models.SearchResult
 	return results, nil
 }
 
-func shouldIgnoreTitle(title string, patterns []string) bool {
+func shouldIgnore(url string, title string, patterns []string) bool {
 	for _, pattern := range patterns {
-		if strings.Contains(title, pattern) {
+		if strings.Contains(title, pattern) || strings.Contains(url, pattern) {
 			return true
 		}
 	}
