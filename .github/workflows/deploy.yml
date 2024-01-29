@@ -1,15 +1,17 @@
-name: Fly Deploy
+name: Deploy
 on:
   push:
-    branches:
-      - main
+    branches: ['main']
 jobs:
   deploy:
-    name: Deploy app
+    name: Deploy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --remote-only
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    - name: deploy containers
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        password: ${{ secrets.SSH_PASSWORD }}
+        port: ${{ secrets.SSH_PORT }}
+        script: /home/${{ secrets.SSH_USER }}/BettercopeLK/deploy.sh
