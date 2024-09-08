@@ -18,8 +18,6 @@ import (
 	"ipmanlk/bettercopelk/models"
 )
 
-type parseFunction func(doc *goquery.Document) (fileUrl string, err error)
-
 type sourceConfig struct {
 	Selector  string
 	Attribute string
@@ -28,7 +26,7 @@ type sourceConfig struct {
 
 var sourceConfigs = map[models.Source]sourceConfig{
 	models.SourceBaiscopelk: {
-		Selector:  "a:has(img[src='https://baiscopelk.com/download.png'])",
+		Selector:  "a[data-e-disable-page-transition='true']",
 		Attribute: "href",
 		Method:    http.MethodPost,
 	},

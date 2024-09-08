@@ -24,7 +24,7 @@ var sourceConfigs = map[models.Source]sourceConfig{
 	models.SourceBaiscopelk: {
 		Source:         models.SourceBaiscopelk,
 		URL:            "https://www.baiscope.lk?s=%s",
-		Selector:       "article.post .entry-title a",
+		Selector:       "article .elementor-post__card a",
 		IgnorePatterns: []string{"Collection"},
 	},
 	models.SourceCineru: {
