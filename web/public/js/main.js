@@ -57,7 +57,27 @@ function SearchBox({ results, setResults, setIsLoading, isLoading }) {
       console.debug("Results: ", event);
       try {
         const data = JSON.parse(event.data);
-        setResults((prev) => [...prev, ...data]);
+        setResults((prev) => {
+          const newResults = [...prev, ...data];
+
+          // Sort results by title based on search query
+          // matches will be shown first
+          newResults.sort((a, b) => {
+            const aTitle = a.title.toLowerCase();
+            const bTitle = b.title.toLowerCase();
+            const queryLower = query.toLowerCase();
+
+            if (aTitle.includes(queryLower) && !bTitle.includes(queryLower)) {
+              return -1;
+            }
+            if (!aTitle.includes(queryLower) && bTitle.includes(queryLower)) {
+              return 1;
+            }
+            return 0;
+          });
+
+          return newResults;
+        });
         if (data.length > 0) {
           window.hasResults = true;
         }
