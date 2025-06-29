@@ -32,7 +32,7 @@ func main() {
 	subtitleHandler.RegisterRoutes(mux)
 
 	staticHandler := static.GetStaticFileServer()
-	mux.Handle("GET /", http.RedirectHandler("/index.html", http.StatusMovedPermanently))
+	mux.Handle("GET /", staticHandler)
 	mux.Handle("GET /index.html", staticHandler)
 	mux.Handle("GET /assets/", staticHandler)
 
