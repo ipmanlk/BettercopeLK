@@ -13,65 +13,66 @@ _Better way to search & download Sinhala subtitles_
 - [Baiscope.lk](https://baiscopelk.com/)
 - [Cineru.lk](https://cineru.lk/)
 - [Piratelk.com](https://piratelk.com/)
+- [Zoom.lk](https://zoom.lk/)
 
 ## Requirements
 
-- Go 1.20+
-
-## Usage
-
-1. Clone this repository using Git or download as a zip file.
-
-2. Run `go run main.go` to start the server.
+- Go 1.24.1+
 
 ## API Documentation
 
-**URL**: `https://bettercopelk.navinda.xyz/api`
+**Base URL**: `https://bettercopelk.navinda.xyz/api/v1`
 
 **Supported source names:**
 
 - `baiscopelk`
 - `cineru`
 - `piratelk`
+- `zoomlk`
+
+### Get available sources
+
+**Endpoint**: `GET /sources`
+
+- **Description**: Get a list of all available subtitle sources.
+- **Method**: GET
+- **Response**: JSON containing array of available source names.
+- **Example Response**:
+  ```json
+  {
+    "sources": ["baiscopelk", "cineru", "piratelk", "zoomlk"]
+  }
+  ```
+
+### Search subtitles
+
+**Endpoint**: `GET /search?query=movie_name&sources=source1,source2`
+
+- **Description**: Get a list of subtitles for a given movie name.
+- **Method**: GET
+- **Parameters**:
+  - `query` (required): The movie name to search for
+  - `sources` (optional): Comma-separated list of sources to search in
+- **Response**: JSON array of subtitle results
 
 ### Search subtitles (SSE endpoint)
 
-GET `/search?query=movie_name`
+**Endpoint**: `GET /search/stream?query=movie_name&sources=source1,source2`
 
 - **Description**: Get a list of subtitles for a given movie name. This is a Server-Sent Events (SSE) endpoint.
 - **Method**: GET
+- **Parameters**:
+  - `query` (required): The movie name to search for
+  - `sources` (optional): Comma-separated list of sources to search in
+- **Response**: Server-Sent Events stream of subtitle results
 
 ### Download subtitle
 
-GET `/download?postUrl=subtitle_post_url&source=source_name`
+**Endpoint**: `GET /download?url=subtitle_post_url&source=source_name`
 
 - **Description**: Download a subtitle from a given source.
 - **Method**: GET
+- **Parameters**:
+  - `url` (required): The URL of the subtitle post
+  - `source` (required): The source name of the subtitle
 - **Response Content-Type**: `application/zip`
-
-### Bulk download subtitles
-
-POST `/bulk-download`
-
-- **Description**: Download multiple subtitles as a single zip file.
-- **Method**: POST
-- **Request Format**: JSON
-  ```json
-  {
-    "data": [
-      {
-        "postUrl": "subtitle_post_url",
-        "source": "source_name"
-      },
-      {
-        "postUrl": "subtitle_post_url",
-        "source": "source_name"
-      }
-    ]
-  }
-  ```
-- **Response Content-Type**: `application/zip`
-
-## Screenshots
-
-<img src="https://i.imgur.com/x5zEO6s.png"/>
