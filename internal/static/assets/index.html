@@ -1,72 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>BettercopeLK - Sinhala Subtitle Search & Download</title>
-    <link rel="stylesheet" href="/assets/style.css">
-</head>
-<body>
+    <meta
+      name="title"
+      content="BettercopeLK - Sinhala Subtitle Search & Download"
+    />
+    <meta
+      name="description"
+      content="Better way to search and download Sinhala subtitles from multiple sources including Baiscope.lk, Cineru.lk, Piratelk.com, and Zoom.lk. Free online subtitle search engine for Sri Lankan movies and TV shows."
+    />
+    <meta
+      name="keywords"
+      content="sinhala subtitles, sri lankan subtitles, movie subtitles, download subtitles, baiscope, cineru, piratelk, zoom.lk, sinhala movies, subtitle search"
+    />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://bettercopelk.navinda.xyz/" />
+    <meta
+      property="og:title"
+      content="BettercopeLK - Sinhala Subtitle Search & Download"
+    />
+    <meta
+      property="og:description"
+      content="Better way to search and download Sinhala subtitles from multiple sources. Free online subtitle search engine for Sri Lankan movies and TV shows."
+    />
+    <meta property="og:site_name" content="BettercopeLK" />
+    <meta property="og:locale" content="en_US" />
+
+    <link rel="canonical" href="https://bettercopelk.navinda.xyz/" />
+
+    <link rel="stylesheet" href="/assets/style.css" />
+  </head>
+  <body>
     <div class="container">
-        <div class="header">
-            <h1>BettercopeLK</h1>
-            <p>Better way to search & download Sinhala subtitles</p>
+      <div class="header">
+        <h1>BettercopeLK</h1>
+        <p>Better way to search & download Sinhala subtitles</p>
+      </div>
+
+      <div class="search-section">
+        <div class="search-row">
+          <input
+            type="text"
+            class="search-input"
+            id="searchInput"
+            placeholder="Loading sources..."
+            disabled
+          />
+
+          <div class="dropdown-container">
+            <button class="dropdown-button" id="dropdownButton" disabled>
+              <span id="dropdownLabel">Loading sources...</span>
+              <span id="sourcesLoading" class="sources-loading show">
+                <div class="sources-spinner"></div>
+              </span>
+            </button>
+            <div class="dropdown-content" id="dropdownContent">
+              <div class="dropdown-item">
+                <input type="checkbox" id="source-all" checked />
+                <label for="source-all">Select All</label>
+              </div>
+              <!-- Sources will be populated dynamically -->
+            </div>
+          </div>
+
+          <button class="search-button" id="searchButton">Search</button>
         </div>
 
-        <div class="search-section">
-            <div class="search-row">
-                <input type="text" class="search-input" id="searchInput" placeholder="Loading sources..." disabled>
-                
-                <div class="dropdown-container">
-                    <button class="dropdown-button" id="dropdownButton" disabled>
-                        <span id="dropdownLabel">Loading sources...</span>
-                        <span id="sourcesLoading" class="sources-loading show">
-                            <div class="sources-spinner"></div>
-                        </span>
-                    </button>
-                    <div class="dropdown-content" id="dropdownContent">
-                        <div class="dropdown-item">
-                            <input type="checkbox" id="source-all" checked>
-                            <label for="source-all">Select All</label>
-                        </div>
-                        <!-- Sources will be populated dynamically -->
-                    </div>
-                </div>
-
-                <button class="search-button" id="searchButton">Search</button>
-            </div>
-            
-            <div class="source-status" id="sourceStatus" style="display: none">
-                <!-- Source status badges will be added here dynamically -->
-            </div>
+        <div class="source-status" id="sourceStatus" style="display: none">
+          <!-- Source status badges will be added here dynamically -->
         </div>
+      </div>
 
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            Searching subtitles...
-        </div>
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        Searching subtitles...
+      </div>
 
-        <div class="results-section" id="resultsSection">
-            <div class="results-header">
-                <h3>Search Results</h3>
-                <div class="results-count" id="resultsCount">0 results found</div>
-            </div>
-            <div class="results-container">
-                <ul class="results-list" id="resultsList">
-                    <!-- Results will be populated here -->
-                </ul>
-                <div class="scroll-fade"></div>
-            </div>
-            <div class="no-results" id="noResults" style="display: none;">
-                No subtitles found. Try adjusting your search terms or source selection.
-            </div>
+      <div class="results-section" id="resultsSection">
+        <div class="results-header">
+          <h3>Search Results</h3>
+          <div class="results-count" id="resultsCount">0 results found</div>
         </div>
+        <div class="results-container">
+          <ul class="results-list" id="resultsList">
+            <!-- Results will be populated here -->
+          </ul>
+          <div class="scroll-fade"></div>
+        </div>
+        <div class="no-results" id="noResults" style="display: none">
+          No subtitles found. Try adjusting your search terms or source
+          selection.
+        </div>
+      </div>
 
-        <div class="console" id="console">
-            <!-- Console messages will appear here -->
-        </div>
+      <div class="console" id="console">
+        <!-- Console messages will appear here -->
+      </div>
     </div>
 
     <script src="/assets/script.js"></script>
-</body>
+  </body>
 </html>
