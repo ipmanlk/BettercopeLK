@@ -1,0 +1,25 @@
+id: zoomlk
+name: ZoomLK
+baseURL: https://zoom.lk
+enabled: true
+
+search:
+  path: /
+  method: GET
+  queryParam: s
+  results:
+    selector: ".td-ss-main-content .item-details .entry-title a"
+    title:
+      selector: ""
+    link:
+      selector: ""
+      attribute: href
+  ignorePatterns:
+    - "Collection"
+
+download:
+  postPage:
+    button:
+      selector: ".download-button"
+      attribute: href
+  method: GET

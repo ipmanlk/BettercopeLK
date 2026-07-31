@@ -1,0 +1,19 @@
+id: noresultsselector
+name: No Results Selector
+baseURL: https://example.com
+enabled: true
+
+search:
+  results:
+    title:
+      selector: "a"
+    link:
+      selector: "a"
+      attribute: href
+
+download:
+  postPage:
+    button:
+      selector: ".btn"
+      attribute: href
+  method: GET

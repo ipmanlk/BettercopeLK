@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BettercopeLK - Sinhala Subtitle Search & Download</title>
+  <meta name="title" content="BettercopeLK - Sinhala Subtitle Search & Download" />
+  <meta name="description" content="Better way to search and download Sinhala subtitles from multiple sources. Free online subtitle search engine for Sri Lankan movies and TV shows." />
+  <link rel="stylesheet" href="/assets/style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <h1 class="logo">BettercopeLK</h1>
+      <p class="tagline">Sinhala subtitle search &amp; download from multiple sources</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Search bar -->
+    <section class="search-section">
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search subtitles..." autofocus />
+        <div class="dropdown">
+          <button id="dropdownButton" class="dropdown-button" type="button">
+            <span class="dropdown-label">All sources</span>
+            <span class="dropdown-chevron" aria-hidden="true"></span>
+          </button>
+          <div id="dropdownContent" class="dropdown-content">
+            <label class="dropdown-item">
+              <input type="checkbox" id="source-all" checked />
+              <span>All sources</span>
+            </label>
+            <div id="sourceList"></div>
+          </div>
+        </div>
+        <button id="searchButton" type="button">Search</button>
+      </div>
+      <span id="sourceStatus" class="source-status"></span>
+    </section>
+
+    <!-- Loading indicator -->
+    <div id="loading" class="loading" hidden>
+      <div class="spinner"></div>
+      <span>Searching...</span>
+    </div>
+
+    <!-- Results -->
+    <section id="resultsSection" class="results-section" hidden>
+      <div class="results-header">
+        <div class="results-info">
+          <span id="resultsCount">0 results</span>
+        </div>
+        <div class="results-actions">
+          <label class="select-all-label">
+            <input type="checkbox" id="selectAllCheckbox" /> Select all
+          </label>
+          <button id="bulkDownloadBtn" class="btn btn-primary" disabled>
+            Download selected
+          </button>
+        </div>
+      </div>
+      <div id="resultsList" class="results-list"></div>
+      <div id="noResults" class="no-results" hidden>
+        <p>No subtitles found. Try a different search term.</p>
+      </div>
+    </section>
+
+    <!-- Console / log panel -->
+    <section id="console" class="console" aria-live="polite">
+      <div class="console-header">
+        <span>Activity Log</span>
+        <button id="clearConsole" class="clear-btn" title="Clear log">×</button>
+      </div>
+      <div id="consoleContent" class="console-content"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>
+        <a href="https://github.com/ipmanlk/BettercopeLK">GitHub</a>
+        &middot;
+        Data sourced from third-party subtitle sites
+      </p>
+    </div>
+  </footer>
+
+  <script src="/assets/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+id: missingname
+name: ""
+baseURL: https://example.com
+enabled: true
+
+search:
+  results:
+    selector: ".row"
+    title:
+      selector: "a"
+    link:
+      selector: "a"
+      attribute: href
+
+download:
+  postPage:
+    button:
+      selector: ".btn"
+      attribute: href
+  method: GET

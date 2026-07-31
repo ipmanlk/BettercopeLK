@@ -1,0 +1,25 @@
+services:
+  bettercopelk:
+    build:
+      context: ..
+      dockerfile: deployments/Dockerfile
+    container_name: bettercopelk
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:8080"
+    environment:
+      - PORT=8080
+      - SOURCES_DIR=/app/sources
+      - LOG_FORMAT=json
+      - RATE_SEARCH_RPM=60
+      - RATE_DOWNLOAD_RPM=30
+      - RATE_BULK_RPM=10
+    deploy:
+      resources:
+        limits:
+          memory: 150M
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

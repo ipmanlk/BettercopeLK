@@ -1,0 +1,25 @@
+id: piratelk
+name: PirateLK
+baseURL: https://piratelk.com
+enabled: true
+
+search:
+  path: /
+  method: GET
+  queryParam: s
+  results:
+    selector: ".item-list .post-box-title a"
+    title:
+      selector: ""
+    link:
+      selector: ""
+      attribute: href
+  ignorePatterns:
+    - "Collection"
+
+download:
+  postPage:
+    button:
+      selector: ".download-button"
+      attribute: href
+  method: GET

@@ -1,0 +1,28 @@
+id: baiscopelk
+name: BaiscopeLK
+baseURL: https://www.baiscopelk.com
+enabled: true
+
+search:
+  path: /
+  method: GET
+  queryParam: s
+  results:
+    selector: "article.elementor-post"
+    title:
+      selector: "h5.elementor-post__title a"
+    link:
+      selector: "a.elementor-post__thumbnail__link, h5.elementor-post__title a"
+      attribute: href
+  ignorePatterns:
+    - "Collection"
+
+download:
+  postPage:
+    button:
+      selector: "a[data-e-disable-page-transition=true]"
+      attribute: href
+  method: POST
+  headers:
+    Content-Type: "application/x-www-form-urlencoded"
+  filenameHeader: "X-Dlm-File-Name"

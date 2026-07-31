@@ -1,0 +1,26 @@
+id: cineru
+name: CineRu
+baseURL: https://cineru.lk
+enabled: true
+
+search:
+  path: /
+  method: GET
+  queryParam: s
+  results:
+    selector: ".item-list .post-box-title a"
+    title:
+      selector: ""
+    link:
+      selector: ""
+      attribute: href
+  ignorePatterns:
+    - "Collection"
+    - "tv_series"
+
+download:
+  postPage:
+    button:
+      selector: "#btn-download"
+      attribute: data-link
+  method: GET

@@ -1,0 +1,20 @@
+id: invalidscheme
+name: Invalid Scheme
+baseURL: ftp://example.com
+enabled: true
+
+search:
+  results:
+    selector: ".row"
+    title:
+      selector: "a"
+    link:
+      selector: "a"
+      attribute: href
+
+download:
+  postPage:
+    button:
+      selector: ".btn"
+      attribute: href
+  method: GET
