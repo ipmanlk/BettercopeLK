@@ -119,6 +119,11 @@
         cb.value = src.id;
         cb.checked = true;
         cb.addEventListener('change', () => {
+          // Block unchecking the last selected source.
+          if (getSelectedSources().length === 0) {
+            cb.checked = true;
+            log('At least one source must be selected.', true);
+          }
           updateDropdownLabel();
           sourceAll.checked = getSelectedSources().length === sources.length;
         });
@@ -327,7 +332,15 @@
     sourceList.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
       cb.checked = checked;
     });
+    // Unchecking "All sources" would leave nothing selected — keep the
+    // first source as the minimum.
+    if (!checked && getSelectedSources().length === 0 && sources.length > 0) {
+      const first = sourceList.querySelector('input[type="checkbox"]');
+      if (first) first.checked = true;
+      log('At least one source must be selected.', true);
+    }
     updateDropdownLabel();
+    sourceAll.checked = getSelectedSources().length === sources.length;
   });
 
   selectAll.addEventListener('change', () => {

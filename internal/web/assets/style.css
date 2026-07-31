@@ -67,10 +67,11 @@ a:hover { text-decoration: underline; }
 .search-bar input::placeholder { color: var(--text-muted); }
 
 /* dropdown integrated into the search bar */
-.search-bar .dropdown { position: relative; display: inline-flex; }
+.search-bar .dropdown { position: relative; }
 .search-bar .dropdown-button {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   padding: 0.625rem 0.875rem;
   font-size: 0.9375rem;
@@ -86,7 +87,6 @@ a:hover { text-decoration: underline; }
 }
 .search-bar .dropdown-button:hover { color: var(--accent); }
 .search-bar .dropdown-button:focus { outline: none; color: var(--accent); }
-.search-bar .dropdown-label { line-height: 1; }
 .search-bar .dropdown-chevron {
   display: inline-block;
   width: 0;
@@ -96,6 +96,7 @@ a:hover { text-decoration: underline; }
   border-top: 5px solid currentColor;
   opacity: 0.7;
   flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .dropdown-content {
@@ -116,9 +117,10 @@ a:hover { text-decoration: underline; }
 }
 .dropdown-content.show { display: block; }
 .dropdown-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 16px 1fr;
   align-items: center;
-  gap: 0.625rem;
+  column-gap: 0.5rem;
   padding: 0.4rem 0.75rem;
   font-size: 0.875rem;
   cursor: pointer;
@@ -130,13 +132,13 @@ a:hover { text-decoration: underline; }
 .dropdown-item:hover { background: var(--surface-hover); }
 .dropdown-item input[type="checkbox"] {
   accent-color: var(--accent);
-  flex-shrink: 0;
+  justify-self: start;
   margin: 0;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
 .dropdown-item > span {
-  display: inline-block;
   text-align: left;
 }
 
