@@ -5,6 +5,7 @@
 ## Design notes
 
 - Search streams via **SSE** so fast sources show before slow ones finish. A non-streaming JSON batch endpoint also exists as fallback.
+- **Full URLs never leave the server.** Search results carry a `path` field — the URL-safe base64-encoded relative path of the post page (see `internal/token`). The server reconstructs the full URL at download time using the source's `baseURL`. This keeps payloads small and the origin host server-side.
 - Single download is `GET` (works as a direct `<a href>` link, browser-handled).
 - Bulk download is `POST` with a JSON body — supports item cap, body-limit middleware, and avoids oversized query strings. Returns a **single streamed zip**.
 - Bulk zip contains a `manifest.json` recording per-item success/error, plus the fetched subtitle files (unzipped from any source zips, names deduped).
@@ -28,7 +29,7 @@ Params:
 
 Response `200`:
 ```json
-{ "results": [ { "title": "...", "url": "...", "source": "baiscopelk" } ] }
+{ "results": [ { "title": "...", "path": "L2luY2VwdGlvbi1zaW5oYWxh...", "source": "baiscopelk" } ] }
 ```
 Errors: `400` missing/overlong query or unknown source; `429` rate limited; `504` if all sources time out.
 
@@ -42,7 +43,7 @@ Streams results as each source resolves. Event types:
 
 ```
 event: result
-data: {"title":"Inception (2010)","url":"https://...","source":"baiscopelk"}
+data: {"title":"Inception (2010)","path":"L2luY2VwdGlvbi1zaW5oYWxh...","source":"baiscopelk"}
 
 event: source-complete
 data: {"source":"baiscopelk","count":3}
@@ -53,13 +54,13 @@ data: {"total":3}
 
 Client disconnect cancels in-flight upstream fetches (context propagation).
 
-## `GET /api/v1/download?url=...&source=...`
+## `GET /api/v1/download?path=...&source=...`
 
-Single subtitle download. `url` must belong to the host of the given `source` (SSRF guard).
+Single subtitle download. `path` is the base64url-encoded relative path from a search result; the server reconstructs the full URL from the source's `baseURL` and validates it through the SSRF guard.
 
 Response: the raw file (`application/zip` or `text/plain` for `.srt`) with `Content-Disposition: attachment`.
 
-Errors: `400` missing params / host mismatch; `404` source unavailable; `502` upstream fetch failed; `429` rate limited.
+Errors: `400` missing params / invalid token / unknown source; `404` source unavailable; `502` upstream fetch failed; `429` rate limited.
 
 ## `POST /api/v1/download/bulk`
 
@@ -69,15 +70,15 @@ Request body (JSON):
 ```json
 {
   "items": [
-    { "url": "https://www.baiscope.lk/inception", "source": "baiscopelk" },
-    { "url": "https://cineru.lk/inception", "source": "cineru" }
+    { "path": "L2luY2VwdGlvbi1zaW5oYWxh...", "source": "baiscopelk" },
+    { "path": "L2luY2VwdGlvbi1zaW5oYWxh...", "source": "cineru" }
   ]
 }
 ```
 
 Constraints:
 - `items` length 1–`MAX_BULK_ITEMS` (default 20)
-- each `url` host must match its `source`'s `baseURL` host (SSRF guard)
+- each `path` must be a valid base64url token that decodes to a safe relative path
 - per-file size ≤ `MAX_FILE_BYTES` (default 50MB); total ≤ `MAX_BULK_TOTAL_BYTES` (default 500MB)
 
 Response `200` — `application/zip` streamed directly to the response (no buffering). Contains:
@@ -93,13 +94,13 @@ Inception (cineru).srt   # name collisions suffixed
 ```json
 {
   "items": [
-    { "url": "...", "source": "baiscopelk", "ok": true, "files": ["Inception.srt"], "bytes": 42000 },
-    { "url": "...", "source": "cineru", "ok": false, "error": "upstream 502" }
+    { "path": "L2luY2VwdGlvbi1zaW5oYWxh...", "source": "baiscopelk", "ok": true, "files": ["Inception.srt"], "bytes": 42000 },
+    { "path": "L2luY2VwdGlvbi1zaW5oYWxh...", "source": "cineru", "ok": false, "error": "upstream 502" }
   ]
 }
 ```
 
-Errors: `400` invalid body / too many items / host mismatch; `413` body too large; `429` rate limited.
+Errors: `400` invalid body / too many items / invalid token; `413` body too large; `429` rate limited.
 
 > A partially-failed bulk still streams a 200 zip with the manifest recording which items failed — better UX than failing the whole request because one source is down.
 

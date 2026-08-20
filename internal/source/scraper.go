@@ -15,6 +15,7 @@ import (
 
 	"ipmanlk/bettercopelk/internal/httpclient"
 	"ipmanlk/bettercopelk/internal/models"
+	"ipmanlk/bettercopelk/internal/token"
 )
 
 // contentDispositionRx extracts the filename from a Content-Disposition header.
@@ -126,9 +127,15 @@ func (s *Scraper) parseSearchResults(body io.Reader) ([]models.SearchResult, err
 			return
 		}
 
+		pathTok, err := token.EncodePath(s.resolveURL(link))
+		if err != nil {
+			// Un-encodable link (e.g. non-http scheme) — skip the row.
+			return
+		}
+
 		results = append(results, models.SearchResult{
 			Title:  title,
-			URL:    s.resolveURL(link),
+			Path:   pathTok,
 			Source: s.cfg.ID,
 		})
 	})

@@ -19,6 +19,7 @@ import (
 	"ipmanlk/bettercopelk/internal/security"
 	"ipmanlk/bettercopelk/internal/source"
 	"ipmanlk/bettercopelk/internal/subtitle"
+	"ipmanlk/bettercopelk/internal/token"
 )
 
 // ---------------------------------------------------------------------------
@@ -56,6 +57,16 @@ type fakeResolver struct{}
 
 func (fakeResolver) LookupIPAddr(ctx context.Context, host string) ([]netip.Addr, error) {
 	return []netip.Addr{netip.MustParseAddr("1.1.1.1")}, nil
+}
+
+// tok encodes a full URL into a path token for test requests.
+func tok(t *testing.T, full string) string {
+	t.Helper()
+	p, err := token.EncodePath(full)
+	if err != nil {
+		t.Fatalf("EncodePath(%q): %v", full, err)
+	}
+	return p
 }
 
 func testServer(t *testing.T, src source.Source) *httptest.Server {
@@ -226,7 +237,7 @@ func TestSearch_ReturnsResults(t *testing.T) {
 	src := &testSource{
 		id: "tsrc", name: "Test", baseURL: "https://test.example",
 		enabled: true,
-		results: []models.SearchResult{{Title: "Movie", URL: "https://test.example/post", Source: "tsrc"}},
+		results: []models.SearchResult{{Title: "Movie", Path: "/post", Source: "tsrc"}},
 	}
 	srv := testServer(t, src)
 	defer srv.Close()
@@ -257,8 +268,8 @@ func TestSearchStream_EmitsEvents(t *testing.T) {
 		id: "ss", name: "SS", baseURL: "https://test.example",
 		enabled: true,
 		results: []models.SearchResult{
-			{Title: "A", URL: "https://test.example/a", Source: "ss"},
-			{Title: "B", URL: "https://test.example/b", Source: "ss"},
+			{Title: "A", Path: "/a", Source: "ss"},
+			{Title: "B", Path: "/b", Source: "ss"},
 		},
 	}
 	srv := testServer(t, src)
@@ -315,7 +326,7 @@ func TestDownload_RequiresParams(t *testing.T) {
 		code int
 	}{
 		{"/api/v1/download", 400},
-		{"/api/v1/download?url=x", 400},
+		{"/api/v1/download?path=x", 400},
 		{"/api/v1/download?source=t", 400},
 	}
 	for _, tc := range cases {
@@ -340,7 +351,7 @@ func TestDownload_ReturnsFile(t *testing.T) {
 	)
 	defer srv.Close()
 
-	resp := mustGET(t, srv.URL, "/api/v1/download?url=https://test.example/file&source=t")
+	resp := mustGET(t, srv.URL, "/api/v1/download?path="+tok(t, "https://test.example/file")+"&source=t")
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected 200, got %d", resp.StatusCode)
 	}
@@ -353,6 +364,51 @@ func TestDownload_ReturnsFile(t *testing.T) {
 	b := mustReadBody(t, resp)
 	if !bytes.Equal(b, content) {
 		t.Errorf("body mismatch: got %q, want %q", string(b), string(content))
+	}
+}
+
+func TestDownload_RejectsInvalidToken(t *testing.T) {
+	src := &testSource{
+		id: "t", name: "T", baseURL: "https://test.example",
+		enabled:    true,
+		dlContent:  []byte("x"),
+		dlFilename: "a.srt",
+	}
+	srv := testServerWithGuard(t,
+		security.NewGuard([]string{"test.example"}),
+		src,
+	)
+	defer srv.Close()
+
+	// "%%%" is not valid base64url.
+	resp := mustGET(t, srv.URL, "/api/v1/download?path=%%%25&source=t")
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("expected 400 for invalid token, got %d", resp.StatusCode)
+	}
+	mustReadBody(t, resp)
+}
+
+func TestBulkDownload_RejectsInvalidToken(t *testing.T) {
+	src := &testSource{
+		id: "bsrc", name: "BulkSrc", baseURL: "https://bsrc.example",
+		enabled:    true,
+		dlContent:  []byte("x"),
+		dlFilename: "a.srt",
+	}
+	srv := testServerWithGuard(t,
+		security.NewGuard([]string{"bsrc.example"}),
+		src,
+	)
+	defer srv.Close()
+
+	body := `{"items":[{"path":"%%%","source":"bsrc"}]}`
+	resp, err := http.Post(srv.URL+"/api/v1/download/bulk", "application/json", strings.NewReader(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("expected 400 for invalid token, got %d", resp.StatusCode)
 	}
 }
 
@@ -373,7 +429,7 @@ func TestBulkDownload_ItemsLimit(t *testing.T) {
 	ts := httptest.NewServer(srv.Handler())
 	defer ts.Close()
 
-	body := `{"items":[{"url":"1","source":"a"},{"url":"2","source":"a"},{"url":"3","source":"a"}]}`
+	body := `{"items":[{"path":"/1","source":"a"},{"path":"/2","source":"a"},{"path":"/3","source":"a"}]}`
 	resp, err := http.Post(ts.URL+"/api/v1/download/bulk", "application/json", strings.NewReader(body))
 	if err != nil {
 		t.Fatal(err)
@@ -400,7 +456,7 @@ func TestBulkDownload_StreamsZip(t *testing.T) {
 	)
 	defer srv.Close()
 
-	body := `{"items":[{"url":"https://bsrc.example/subs","source":"bsrc"}]}`
+	body := `{"items":[{"path":"` + tok(t, "https://bsrc.example/subs") + `","source":"bsrc"}]}`
 	resp, err := http.Post(srv.URL+"/api/v1/download/bulk", "application/json", strings.NewReader(body))
 	if err != nil {
 		t.Fatal(err)

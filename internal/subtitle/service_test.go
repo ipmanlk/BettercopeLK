@@ -14,6 +14,7 @@ import (
 	"ipmanlk/bettercopelk/internal/models"
 	"ipmanlk/bettercopelk/internal/security"
 	"ipmanlk/bettercopelk/internal/source"
+	"ipmanlk/bettercopelk/internal/token"
 )
 
 // fakeSource implements source.Source for testing.
@@ -65,18 +66,28 @@ func (testResolver) LookupIPAddr(_ context.Context, host string) ([]netip.Addr, 
 	return []netip.Addr{netip.MustParseAddr("93.184.216.34")}, nil
 }
 
+// tok encodes a full URL into a path token for test requests.
+func tok(t *testing.T, full string) string {
+	t.Helper()
+	p, err := token.EncodePath(full)
+	if err != nil {
+		t.Fatalf("EncodePath(%q): %v", full, err)
+	}
+	return p
+}
+
 func TestServiceSearchAggregation(t *testing.T) {
 	reg := buildRegistry(
 		&fakeSource{
 			id: "src1", name: "Source One", baseURL: "https://one.example.com", enabled: true,
 			results: []models.SearchResult{
-				{Title: "Movie A (src1)", URL: "https://one.example.com/a", Source: "src1"},
+				{Title: "Movie A (src1)", Path: "path1", Source: "src1"},
 			},
 		},
 		&fakeSource{
 			id: "src2", name: "Source Two", baseURL: "https://two.example.com", enabled: true,
 			results: []models.SearchResult{
-				{Title: "Movie A (src2)", URL: "https://two.example.com/a", Source: "src2"},
+				{Title: "Movie A (src2)", Path: "path2", Source: "src2"},
 			},
 		},
 	)
@@ -105,7 +116,7 @@ func TestServiceSearchErrorSkip(t *testing.T) {
 	reg := buildRegistry(
 		&fakeSource{
 			id: "good", name: "Good", baseURL: "https://good.example.com", enabled: true,
-			results: []models.SearchResult{{Title: "Movie", URL: "https://good.example.com/m", Source: "good"}},
+			results: []models.SearchResult{{Title: "Movie", Path: "path", Source: "good"}},
 		},
 		&fakeSource{
 			id: "bad", name: "Bad", baseURL: "https://bad.example.com", enabled: true,
@@ -147,7 +158,7 @@ func TestServiceSearchContextCancellation(t *testing.T) {
 func TestServiceSearchStreamCancellation(t *testing.T) {
 	src := &fakeSource{
 		id: "src", name: "Src", baseURL: "https://src.example.com", enabled: true,
-		results: []models.SearchResult{{Title: "A", URL: "x", Source: "src"}},
+		results: []models.SearchResult{{Title: "A", Path: "x", Source: "src"}},
 	}
 	reg := buildRegistry(src)
 	srv := &Service{cfg: &config.Config{MaxBulkItems: 20}, reg: reg}
@@ -192,7 +203,7 @@ func TestServiceBulkItemCap(t *testing.T) {
 
 	var items []models.BulkItem
 	for i := 0; i < 3; i++ {
-		items = append(items, models.BulkItem{URL: fmt.Sprintf("https://x.example.com/%d", i), Source: "x"})
+		items = append(items, models.BulkItem{Path: tok(t, fmt.Sprintf("https://x.example.com/%d", i)), Source: "x"})
 	}
 
 	_, err := srv.DownloadBulk(context.Background(), models.BulkDownloadRequest{Items: items}, bytes.NewBuffer(nil))
@@ -239,9 +250,9 @@ func TestServiceBulkPartialFailure(t *testing.T) {
 	var buf bytes.Buffer
 	manifest, err := srv.DownloadBulk(context.Background(), models.BulkDownloadRequest{
 		Items: []models.BulkItem{
-			{URL: "https://s1.example.com/a", Source: "s1"},
-			{URL: "https://s2.example.com/b", Source: "s2"},
-			{URL: "https://s3.example.com/c", Source: "s3"},
+			{Path: tok(t, "https://s1.example.com/a"), Source: "s1"},
+			{Path: tok(t, "https://s2.example.com/b"), Source: "s2"},
+			{Path: tok(t, "https://s3.example.com/c"), Source: "s3"},
 		},
 	}, &buf)
 	if err != nil {
@@ -293,9 +304,9 @@ func TestServiceBulkDedupe(t *testing.T) {
 	var buf bytes.Buffer
 	_, err := srv.DownloadBulk(context.Background(), models.BulkDownloadRequest{
 		Items: []models.BulkItem{
-			{URL: "https://s1.example.com/a", Source: "s1"},
-			{URL: "https://s1.example.com/a", Source: "s1"}, // duplicate
-			{URL: "https://s1.example.com/a", Source: "s1"}, // duplicate
+			{Path: tok(t, "https://s1.example.com/a"), Source: "s1"},
+			{Path: tok(t, "https://s1.example.com/a"), Source: "s1"}, // duplicate
+			{Path: tok(t, "https://s1.example.com/a"), Source: "s1"}, // duplicate
 		},
 	}, &buf)
 	if err != nil {

@@ -10,20 +10,15 @@ import (
 
 	"ipmanlk/bettercopelk/internal/middleware"
 	"ipmanlk/bettercopelk/internal/models"
+	"ipmanlk/bettercopelk/internal/token"
 )
 
 func (s *Server) handleDownload(w http.ResponseWriter, r *http.Request) {
-	urlParam := r.URL.Query().Get("url")
+	pathParam := r.URL.Query().Get("path")
 	sourceParam := r.URL.Query().Get("source")
 
-	if urlParam == "" || sourceParam == "" {
-		writeError(w, r, http.StatusBadRequest, "url and source are required")
-		return
-	}
-
-	// Validate URL through SSRF guard.
-	if err := s.guard.CheckURL(r.Context(), urlParam); err != nil {
-		writeError(w, r, http.StatusBadRequest, "invalid URL: "+err.Error())
+	if pathParam == "" || sourceParam == "" {
+		writeError(w, r, http.StatusBadRequest, "path and source are required")
 		return
 	}
 
@@ -33,8 +28,14 @@ func (s *Server) handleDownload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate the path token decodes before calling the service.
+	if _, err := token.DecodePath(pathParam); err != nil {
+		writeError(w, r, http.StatusBadRequest, "invalid path: "+err.Error())
+		return
+	}
+
 	req := models.DownloadRequest{
-		URL:    urlParam,
+		Path:   pathParam,
 		Source: sourceParam,
 	}
 
@@ -70,14 +71,15 @@ func (s *Server) handleBulkDownload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate each item's URL and source.
+	// Validate each item's source and path token before streaming starts, so
+	// a bad request gets a 400 instead of a truncated zip.
 	for _, item := range req.Items {
-		if err := s.guard.CheckURL(r.Context(), item.URL); err != nil {
-			writeError(w, r, http.StatusBadRequest, fmt.Sprintf("invalid URL %q: %v", item.URL, err))
-			return
-		}
 		if s.registry.Get(item.Source) == nil {
 			writeError(w, r, http.StatusBadRequest, fmt.Sprintf("unknown source %q", item.Source))
+			return
+		}
+		if _, err := token.DecodePath(item.Path); err != nil {
+			writeError(w, r, http.StatusBadRequest, fmt.Sprintf("invalid path for item: %v", err))
 			return
 		}
 	}

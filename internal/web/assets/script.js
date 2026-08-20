@@ -28,7 +28,7 @@
   /* ---- state ---- */
   let sources = [];
   let activeSearch = null;       // EventSource
-  let results = [];              // { title, url, source, selected }
+  let results = [];              // { title, path, source, selected }
   let initialLog = null;         // source-state message restored on new search
 
   /* ---- helpers ---- */
@@ -184,10 +184,10 @@
     es.addEventListener('result', (e) => {
       try {
         const data = JSON.parse(e.data);
-        results.push({ title: data.title, url: data.url, source: data.source, selected: false });
+        results.push({ title: data.title, path: data.path, source: data.source, selected: false });
         resultsSection.hidden = false;
         noResults.hidden = true;
-        appendResultRow(data.title, data.url, data.source, results.length - 1);
+        appendResultRow(data.title, data.path, data.source, results.length - 1);
       } catch (err) {
         log('Parse error: ' + err.message, true);
       }
@@ -224,7 +224,7 @@
     });
   }
 
-  function appendResultRow(title, url, source, index) {
+  function appendResultRow(title, pathTok, source, index) {
     const row = document.createElement('div');
     row.className = 'result-row';
     row.dataset.index = index;
@@ -257,7 +257,7 @@
 
     const dlLink = document.createElement('a');
     dlLink.className = 'btn btn-small';
-    dlLink.href = '/api/v1/download?url=' + encodeURIComponent(url) + '&source=' + encodeURIComponent(source);
+    dlLink.href = '/api/v1/download?path=' + encodeURIComponent(pathTok) + '&source=' + encodeURIComponent(source);
     dlLink.textContent = 'Download';
     dlLink.target = '_blank';
     dlLink.rel = 'noopener';
@@ -277,7 +277,7 @@
 
     log('Downloading ' + selected.length + ' subtitle(s)...');
 
-    const items = selected.map((r) => ({ url: r.url, source: r.source }));
+    const items = selected.map((r) => ({ path: r.path, source: r.source }));
 
     try {
       const resp = await fetch('/api/v1/download/bulk', {

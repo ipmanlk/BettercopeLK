@@ -9,10 +9,12 @@ type SearchRequest struct {
 	Sources []string `json:"sources,omitempty"`
 }
 
-// SearchResult is a single subtitle hit from a source.
+// SearchResult is a single subtitle hit from a source. Path is the encoded
+// relative URL token (see internal/token); the full URL never leaves the
+// server.
 type SearchResult struct {
 	Title  string `json:"title"`
-	URL    string `json:"url"`
+	Path   string `json:"path"`
 	Source string `json:"source"`
 }
 
@@ -21,9 +23,10 @@ type SearchResponse struct {
 	Results []SearchResult `json:"results"`
 }
 
-// DownloadRequest is a request to download a single subtitle.
+// DownloadRequest is a request to download a single subtitle. Path is the
+// encoded relative URL token from a SearchResult.
 type DownloadRequest struct {
-	URL    string `json:"url"`
+	Path   string `json:"path"`
 	Source string `json:"source"`
 }
 
@@ -32,9 +35,10 @@ type BulkDownloadRequest struct {
 	Items []BulkItem `json:"items"`
 }
 
-// BulkItem is one entry in a bulk download request.
+// BulkItem is one entry in a bulk download request. Path is the encoded
+// relative URL token from a SearchResult.
 type BulkItem struct {
-	URL    string `json:"url"`
+	Path   string `json:"path"`
 	Source string `json:"source"`
 }
 
@@ -61,7 +65,7 @@ type SubtitleFile struct {
 // ResultEvent is emitted for each subtitle hit during a streamed search.
 type ResultEvent struct {
 	Title  string `json:"title"`
-	URL    string `json:"url"`
+	Path   string `json:"path"`
 	Source string `json:"source"`
 }
 
@@ -95,9 +99,11 @@ type Manifest struct {
 	CreatedAt time.Time      `json:"created_at"`
 }
 
-// ManifestItem records the outcome of one bulk download item.
+// ManifestItem records the outcome of one bulk download item. Path is the
+// encoded relative URL token from the request, so the full URL stays
+// server-side.
 type ManifestItem struct {
-	URL    string   `json:"url"`
+	Path   string   `json:"path"`
 	Source string   `json:"source"`
 	OK     bool     `json:"ok"`
 	Files  []string `json:"files,omitempty"`

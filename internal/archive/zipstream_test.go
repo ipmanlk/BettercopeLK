@@ -115,8 +115,8 @@ func TestStreamWriterAddManifest(t *testing.T) {
 
 	m := &models.Manifest{
 		Items: []models.ManifestItem{
-			{URL: "http://example.com/movie", Source: "test", OK: true, Files: []string{"movie.srt"}, Bytes: 100},
-			{URL: "http://example.com/fail", Source: "test", OK: false, Error: "upstream 502"},
+			{Path: "/movie", Source: "test", OK: true, Files: []string{"movie.srt"}, Bytes: 100},
+			{Path: "/fail", Source: "test", OK: false, Error: "upstream 502"},
 		},
 	}
 	if err := sw.AddManifest(m); err != nil {

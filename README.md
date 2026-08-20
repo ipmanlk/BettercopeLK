@@ -96,7 +96,7 @@ All configuration is through environment variables:
 | `GET` | `/api/v1/sources` | List available sources |
 | `GET` | `/api/v1/search?query=...&sources=...` | Batch search (JSON) |
 | `GET` | `/api/v1/search/stream?query=...&sources=...` | Streamed search (SSE) |
-| `GET` | `/api/v1/download?url=...&source=...` | Single subtitle download |
+| `GET` | `/api/v1/download?path=...&source=...` | Single subtitle download |
 | `POST` | `/api/v1/download/bulk` | Bulk download (streamed zip) |
 | `GET` | `/healthz` | Liveness check |
 | `GET` | `/readyz` | Readiness check |

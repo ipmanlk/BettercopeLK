@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 	"ipmanlk/bettercopelk/internal/models"
 	"ipmanlk/bettercopelk/internal/security"
 	"ipmanlk/bettercopelk/internal/source"
+	"ipmanlk/bettercopelk/internal/token"
 )
 
 const maxConcurrentFetches = 5
@@ -133,10 +135,15 @@ func (s *Service) StreamSearch(ctx context.Context, req models.SearchRequest, re
 	}()
 }
 
-// Download fetches a single subtitle file from the given source. It validates
-// the URL through the security guard before making the request.
+// Download fetches a single subtitle file from the given source. It decodes
+// the path token, reconstructs the full URL, and validates it through the
+// security guard before making the request.
 func (s *Service) Download(ctx context.Context, req models.DownloadRequest) ([]byte, string, error) {
-	if err := s.guard.CheckURL(ctx, req.URL); err != nil {
+	fullURL, err := s.resolvePath(req.Path, req.Source)
+	if err != nil {
+		return nil, "", err
+	}
+	if err := s.guard.CheckURL(ctx, fullURL); err != nil {
 		return nil, "", fmt.Errorf("%w", err)
 	}
 
@@ -145,13 +152,14 @@ func (s *Service) Download(ctx context.Context, req models.DownloadRequest) ([]b
 		return nil, "", fmt.Errorf("source %q not found", req.Source)
 	}
 
-	return src.Download(ctx, req.URL)
+	return src.Download(ctx, fullURL)
 }
 
 // DownloadBulk fetches multiple subtitles in parallel, unzips any source zips,
-// deduplicates filenames, and streams a single combined zip to w. Each item is
-// validated through the security guard. Per-item errors are recorded in the
-// manifest without aborting the entire download.
+// deduplicates filenames, and streams a single combined zip to w. Each item's
+// path token is decoded and validated through the security guard before any
+// download starts. Per-item errors are recorded in the manifest without
+// aborting the entire download.
 func (s *Service) DownloadBulk(ctx context.Context, req models.BulkDownloadRequest, w io.Writer) (*models.Manifest, error) {
 	if len(req.Items) == 0 {
 		return nil, fmt.Errorf("bulk request must contain at least one item")
@@ -160,16 +168,10 @@ func (s *Service) DownloadBulk(ctx context.Context, req models.BulkDownloadReque
 		return nil, fmt.Errorf("bulk request contains %d items, max %d", len(req.Items), s.cfg.MaxBulkItems)
 	}
 
-	items := dedupeItems(req.Items)
-
-	// Validate all URLs and sources upfront.
-	for _, item := range items {
-		if err := s.guard.CheckURL(ctx, item.URL); err != nil {
-			return nil, fmt.Errorf("item %q: %w", item.URL, err)
-		}
-		if s.reg.Get(item.Source) == nil {
-			return nil, fmt.Errorf("source %q not found", item.Source)
-		}
+	// Resolve all path tokens to full URLs and validate them upfront.
+	items, err := s.resolveItems(ctx, req.Items)
+	if err != nil {
+		return nil, err
 	}
 
 	sw := archive.NewWriter(w, s.cfg)
@@ -187,8 +189,8 @@ func (s *Service) DownloadBulk(ctx context.Context, req models.BulkDownloadReque
 	g, ctx := errgroup.WithContext(ctx)
 	sem := make(chan struct{}, maxConcurrentFetches)
 
-	for _, item := range items {
-		item := item
+	for _, ri := range items {
+		ri := ri
 		g.Go(func() error {
 			select {
 			case sem <- struct{}{}:
@@ -197,27 +199,27 @@ func (s *Service) DownloadBulk(ctx context.Context, req models.BulkDownloadReque
 				return ctx.Err()
 			}
 
-			src := s.reg.Get(item.Source)
-			content, filename, err := src.Download(ctx, item.URL)
+			src := s.reg.Get(ri.item.Source)
+			content, filename, err := src.Download(ctx, ri.url)
 			if err != nil {
-				resultCh <- itemResult{item: item, err: err}
+				resultCh <- itemResult{item: ri.item, err: err}
 				return nil
 			}
 
 			if archive.IsZipFile(filename) {
 				files, totalBytes, err := archive.ExtractAndCopy(s.cfg, sw, bytes.NewReader(content), int64(len(content)), "")
 				if err != nil {
-					resultCh <- itemResult{item: item, err: fmt.Errorf("extracting zip: %w", err)}
+					resultCh <- itemResult{item: ri.item, err: fmt.Errorf("extracting zip: %w", err)}
 					return nil
 				}
-				resultCh <- itemResult{item: item, files: files, bytes: totalBytes}
+				resultCh <- itemResult{item: ri.item, files: files, bytes: totalBytes}
 			} else {
 				name := filename
 				if err := sw.AddFile(name, bytes.NewReader(content)); err != nil {
-					resultCh <- itemResult{item: item, err: fmt.Errorf("adding file: %w", err)}
+					resultCh <- itemResult{item: ri.item, err: fmt.Errorf("adding file: %w", err)}
 					return nil
 				}
-				resultCh <- itemResult{item: item, files: []string{name}, bytes: int64(len(content))}
+				resultCh <- itemResult{item: ri.item, files: []string{name}, bytes: int64(len(content))}
 			}
 			return nil
 		})
@@ -229,7 +231,7 @@ func (s *Service) DownloadBulk(ctx context.Context, req models.BulkDownloadReque
 	var manifestItems []models.ManifestItem
 	for r := range resultCh {
 		mi := models.ManifestItem{
-			URL:    r.item.URL,
+			Path:   r.item.Path,
 			Source: r.item.Source,
 			OK:     r.err == nil,
 			Files:  r.files,
@@ -272,17 +274,47 @@ func (s *Service) selectSources(ids []string) []source.Source {
 	return out
 }
 
-// dedupeItems removes duplicate (url, source) pairs from the request.
-func dedupeItems(items []models.BulkItem) []models.BulkItem {
+// resolvePath decodes a path token and reconstructs the full URL for the
+// given source, without contacting the network.
+func (s *Service) resolvePath(pathTok, sourceID string) (string, error) {
+	src := s.reg.Get(sourceID)
+	if src == nil {
+		return "", fmt.Errorf("source %q not found", sourceID)
+	}
+	rel, err := token.DecodePath(pathTok)
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimRight(src.BaseURL(), "/") + rel, nil
+}
+
+// resolvedItem pairs a bulk item with the full URL reconstructed from its
+// path token. URL stays server-side; the wire type never carries it.
+type resolvedItem struct {
+	item models.BulkItem
+	url  string
+}
+
+// resolveItems converts each BulkItem's path token into a full URL, validates
+// the reconstructed URL through the security guard, and deduplicates items
+// that resolve to the same URL and source.
+func (s *Service) resolveItems(ctx context.Context, items []models.BulkItem) ([]resolvedItem, error) {
 	seen := make(map[string]bool)
-	var out []models.BulkItem
+	var out []resolvedItem
 	for _, item := range items {
-		key := item.URL + "|" + item.Source
+		fullURL, err := s.resolvePath(item.Path, item.Source)
+		if err != nil {
+			return nil, fmt.Errorf("item %q: %w", item.Path, err)
+		}
+		if err := s.guard.CheckURL(ctx, fullURL); err != nil {
+			return nil, fmt.Errorf("item %q: %w", fullURL, err)
+		}
+		key := fullURL + "|" + item.Source
 		if seen[key] {
 			continue
 		}
 		seen[key] = true
-		out = append(out, item)
+		out = append(out, resolvedItem{item: item, url: fullURL})
 	}
-	return out
+	return out, nil
 }

@@ -2,16 +2,20 @@
 
 Grounded in current Go best practice (Go 1.24+). Concrete values are starting points, all env-configurable.
 
-## 1. SSRF protection (critical — the download endpoints take a URL the server fetches)
+## 1. SSRF protection (critical — the download endpoints fetch a URL upstream)
 
-The download and bulk endpoints accept a user-supplied `url` that the server fetches upstream. Without protection an attacker can hit internal endpoints (`http://169.254.169.254/` cloud metadata, `http://localhost:8080/`, `http://10.0.0.1/`).
+The download and bulk endpoints used to accept a user-supplied `url` that the server fetches upstream. They now accept only an opaque `path` token: the URL-safe base64 encoding of the post page's relative path (see `internal/token`). The server reconstructs the full URL from the source's `baseURL` and validates it through the guard before fetching.
 
-**Defense: host allowlist derived from source configs + private-IP rejection.**
+**Defense layers:**
+
+1. **Token validation** — the `path` token must decode to a relative path that starts with `/`, is not protocol-relative (`//host`), contains no scheme injection (`://`), no path-traversal segments (`..`), no backslashes or control characters, and is length-bounded (4 KB). A malformed token is rejected with `400`.
+2. **Host allowlist** — the reconstructed URL's host always comes from a registered source's `baseURL` host, so a client can only ever ask us to fetch from the subtitle sites we already scrape.
+3. **Private-IP rejection** — still enforced on the reconstructed URL, guarding against DNS rebinding (see below).
 
 `internal/security/urlguard.go`:
 
 ```go
-// Package security validates that a user-supplied URL is safe to fetch.
+// Package security validates that a URL the server is about to fetch is safe.
 // A URL is allowed only if its host matches a registered source's baseURL host,
 // its scheme is http/https, and the resolved IP is not private/loopback/link-local.
 package security
